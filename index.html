@@ -67,29 +67,18 @@
             font-size: 12px;
             border-radius: 5px;
         }
-        .purchased {
-            padding: 20px;
-            margin-top: 20px;
-            background: #333;
-            border-radius: 10px;
-        }
-        .purchased .gift {
-            margin: 5px;
-            display: inline-block;
-        }
     </style>
 </head>
 <body>
     <div class="tab">
         <div id="storeTab" class="active">Подарки на продажу</div>
-        <div id="collectionTab">Коллекция</div>
     </div>
 
     <div id="storeContainer" class="container">
-        <div class="gift" data-id="mammoth" data-price="1">
+        <div class="gift" data-id="mammoth" data-price="5000">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mammoth.png" alt="Мамонт">
-            <div class="price">⭐ 1</div>
+            <div class="price">⭐ 5000</div>
             <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="durov" data-price="2000">
@@ -112,68 +101,21 @@
         </div>
     </div>
 
-    <div id="collectionContainer" class="purchased" style="display:none;"></div>
-
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        function switchTab(tab) {
-            const storeTab = document.getElementById('storeTab');
-            const collectionTab = document.getElementById('collectionTab');
-            const storeContainer = document.getElementById('storeContainer');
-            const collectionContainer = document.getElementById('collectionContainer');
-
-            if (tab === 'store') {
-                storeTab.classList.add('active');collectionTab.classList.remove('active');
-                storeContainer.style.display = 'flex';
-                collectionContainer.style.display = 'none';
-            } else {
-                storeTab.classList.remove('active');
-                collectionTab.classList.add('active');
-                storeContainer.style.display = 'none';
-                collectionContainer.style.display = 'block';
-            }
-        }
-
-        function updatePurchasedTab() {
-            const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-            const collectionContainer = document.getElementById('collectionContainer');
-            
-            collectionContainer.innerHTML = '';
-            purchasedGifts.forEach(gift => {
-                const giftElement = document.createElement('div');
-                giftElement.classList.add('gift');
-                giftElement.innerHTML = `
-                    <div class="label">Куплено</div>
-                    <img src="https://vocococo.github.io/gifts/${gift.id}.png" alt="${gift.id}">
-                    <div class="price">⭐ ${gift.price}</div>
-                `;
-                collectionContainer.appendChild(giftElement);
-            });
-        }
-
+        // Обработчик клика по кнопке "Купить"
         document.querySelectorAll(".buyButton").forEach(button => {
             button.addEventListener("click", async function() {
                 const giftElement = button.closest('.gift');
                 let id = giftElement.dataset.id;
                 let price = giftElement.dataset.price;
-        
+
                 // Отправка данных для оплаты
                 await tg.sendData(JSON.stringify({ gift_id: id, price: price }));
-        
-                // Уведомление пользователю, что нужно произвести оплату
-                alert("Перейдите для оплаты подарка!");
             });
         });
-
-        document.getElementById('storeTab').addEventListener('click', () => switchTab('store'));
-        document.getElementById('collectionTab').addEventListener('click', () => switchTab('collection'));
-
-        window.onload = () => {
-            updatePurchasedTab();
-            switchTab('store');
-        };
     </script>
 </body>
 </html>
