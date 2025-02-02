@@ -122,53 +122,47 @@
             document.getElementById('collectionContainer').style.display = tab === 'collection' ? 'block' : 'none';
         }
 
-        function updatePurchasedTab() {
-            let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];let collectionContainer = document.getElementById('collectionContainer');
-            collectionContainer.innerHTML = '';
+        // Обновление вкладки "Коллекция" после покупки
+function updatePurchasedTab() {
+    const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+    const collectionContainer = document.getElementById('collectionContainer');
+    
+    // Отображение купленных подарков
+    collectionContainer.innerHTML = '';
+    purchasedGifts.forEach(gift => {
+        const giftElement = document.createElement('div');
+        giftElement.classList.add('gift');
+        giftElement.innerHTML = `
+            <div class="label">Куплено</div>
+            <img src="https://vocococo.github.io/gifts/${gift.id}.png" alt="${gift.id}">
+            <div class="price">⭐ ${gift.price}</div>
+        `;
+        collectionContainer.appendChild(giftElement);
+    });
+}
 
-            purchasedGifts.forEach(gift => {
-                let giftElement = document.createElement('div');
-                giftElement.classList.add('gift');
-                giftElement.innerHTML = `
-                    <div class="label">Куплено</div>
-                    <img src="https://vocococo.github.io/gifts/${gift.id}.png" alt="${gift.id}">
-                    <div class="price">⭐ ${gift.price}</div>
-                `;
-                collectionContainer.appendChild(giftElement);
-            });
-        }
+// Обработчик клика по кнопке "Купить"
+document.querySelectorAll(".buyButton").forEach(button => {
+    button.addEventListener("click", async function() {
+        const giftElement = button.closest('.gift');
+        let id = giftElement.dataset.id;
+        let price = giftElement.dataset.price;
 
-        // Отправка данных в бота
-        document.querySelectorAll(".gift").forEach(gift => {
-            gift.addEventListener("click", () => {
-                let id = gift.dataset.id;
-                let price = parseInt(gift.dataset.price, 10);
+        // Отправка данных для оплаты
+        await tg.sendData(JSON.stringify({ gift_id: id, price: price }));
 
-                console.log("Отправка данных в бота:", { gift_id: id, price: price });
+        // После успешной оплаты, добавляем подарок в коллекцию
+        const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+        purchasedGifts.push({ id, price });
+        localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
 
-                tg.sendData(JSON.stringify({ gift_id: id, price: price }));
-                tg.close();
-            });
-        });
+        // Обновление отображения вкладки коллекции
+        updatePurchasedTab();
 
-        // Обработчик успешной оплаты
-        window.addEventListener('message', function(event) {
-            console.log("Сообщение от бота:", event.data);
-
-            if (event.data === "paymentSuccess") {
-                let lastGift = JSON.parse(localStorage.getItem('lastGift'));
-                if (!lastGift) return;
-
-                let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-                purchasedGifts.push(lastGift);
-
-                localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
-                updatePurchasedTab();
-                switchTab('collection');
-
-                alert("Оплата прошла успешно! Ваш подарок добавлен в коллекцию.");
-            }
-        });
+        // Оповещение о совершённой оплате
+        alert("Оплата прошла успешно! Ваш подарок добавлен в коллекцию.");
+    });
+});
 
         document.getElementById('storeTab').addEventListener('click', () => switchTab('store'));
         document.getElementById('collectionTab').addEventListener('click', () => switchTab('collection'));
