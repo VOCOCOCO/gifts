@@ -67,6 +67,12 @@
             font-size: 12px;
             border-radius: 5px;
         }
+        /* Стиль для мобильных устройств */
+        @media (max-width: 768px) {
+            .gift {
+                width: 45%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -75,29 +81,25 @@
     </div>
 
     <div id="storeContainer" class="container">
-        <div class="gift" data-id="mammoth" data-price="1">
+        <div class="gift" data-id="mammoth" data-price="5000">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mammoth.png" alt="Мамонт">
-            <div class="price">⭐ 1</div>
-            <button class="buyButton">Купить</button>
+            <div class="price">⭐ 5000</div>
         </div>
         <div class="gift" data-id="durov" data-price="2000">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/durov.png" alt="Дуров">
             <div class="price">⭐ 2000</div>
-            <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="dog" data-price="500">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/dog.png" alt="Пёс">
             <div class="price">⭐ 500</div>
-            <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="mic" data-price="300">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mic.png" alt="Микрофон">
             <div class="price">⭐ 300</div>
-            <button class="buyButton">Купить</button>
         </div>
     </div>
 
@@ -105,16 +107,21 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Обработчик клика по кнопке "Купить"
-        document.querySelectorAll(".buyButton").forEach(button => {
-            button.addEventListener("click", async function() {
-                const giftElement = button.closest('.gift');
+        // Обработчик клика по подарку
+        document.querySelectorAll(".gift").forEach(gift => {
+            gift.addEventListener("click", async function() {
+                const giftElement = gift;
                 let id = giftElement.dataset.id;
                 let price = giftElement.dataset.price;
 
                 // Отправка данных для оплаты
                 await tg.sendData(JSON.stringify({ gift_id: id, price: price }));
             });
+        });
+
+        // Функция для обработки успешной оплаты
+        tg.onEvent('onPaymentSuccess', () => {
+            alert("Спасибо за покупку! Все подарки хранятся у администратора.");
         });
     </script>
 </body>
