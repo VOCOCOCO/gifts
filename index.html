@@ -81,7 +81,7 @@
 </head>
 <body>
     <div class="tab">
-        <div id="storeTab" class="active">Подарки</div>
+        <div id="storeTab" class="active">Подарки на продажу</div>
         <div id="collectionTab">Коллекция</div>
     </div>
 
@@ -90,21 +90,25 @@
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mammoth.png" alt="Мамонт">
             <div class="price">⭐ 5000</div>
+            <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="durov" data-price="2000">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/durov.png" alt="Дуров">
             <div class="price">⭐ 2000</div>
+            <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="dog" data-price="500">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/dog.png" alt="Пёс">
             <div class="price">⭐ 500</div>
+            <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="mic" data-price="300">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mic.png" alt="Микрофон">
             <div class="price">⭐ 300</div>
+            <button class="buyButton">Купить</button>
         </div>
     </div>
 
@@ -121,66 +125,69 @@
             const storeContainer = document.getElementById('storeContainer');
             const collectionContainer = document.getElementById('collectionContainer');
 
-            if (tab === 'store') {
-                storeTab.classList.add('active');
-                collectionTab.classList.remove('active');
-                storeContainer.style.display = 'flex';
-                collectionContainer.style.display = 'none';} else {
-                    storeTab.classList.remove('active');
-                    collectionTab.classList.add('active');
-                    storeContainer.style.display = 'none';
-                    collectionContainer.style.display = 'block';
-                }
-            }
-    
-            // Функция для обновления вкладки "Коллекция"
-            function updatePurchasedTab() {
-                const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-                const collectionContainer = document.getElementById('collectionContainer');
-                
-                // Отображение купленных подарков
-                collectionContainer.innerHTML = '';
-                purchasedGifts.forEach(gift => {
-                    const giftElement = document.createElement('div');
-                    giftElement.classList.add('gift');
-                    giftElement.innerHTML = `
-                        <div class="label">Куплено</div>
-                        <img src="https://vocococo.github.io/gifts/${gift.id}.png" alt="${gift.id}">
-                        <div class="price">⭐ ${gift.price}</div>
-                    `;
-                    collectionContainer.appendChild(giftElement);
-                });
-            }
-    
-            // Обработчик клика по подаркам
-            document.querySelectorAll(".gift").forEach(gift => {
-                gift.addEventListener("click", () => {
-                    let id = gift.dataset.id;
-                    let price = gift.dataset.price;
-    
-                    // Сохранение купленного подарка в localStorage
-                    const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-                    purchasedGifts.push({ id, price });
-                    localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
-    
-                    // Обновление отображения вкладки коллекции
-                    updatePurchasedTab();
-    
-                    // Отправка данных о подарке в Telegram
-                    tg.sendData(JSON.stringify({ gift_id: id, price: price }));
-                    tg.close();
-                });
-            });
-    
-            // Переключение вкладок
-            document.getElementById('storeTab').addEventListener('click', () => switchTab('store'));
-            document.getElementById('collectionTab').addEventListener('click', () => switchTab('collection'));
-    
-            // Инициализация при загрузке страницы
-            window.onload = () => {
-                updatePurchasedTab();
-                switchTab('store');
-            };
-        </script>
-    </body>
-    </html>
+            if (tab === 'store') {storeTab.classList.add('active');
+            collectionTab.classList.remove('active');
+            storeContainer.style.display = 'flex';
+            collectionContainer.style.display = 'none';
+        } else {
+            storeTab.classList.remove('active');
+            collectionTab.classList.add('active');
+            storeContainer.style.display = 'none';
+            collectionContainer.style.display = 'block';
+        }
+    }
+
+    // Функция для обновления вкладки "Коллекция"
+    function updatePurchasedTab() {
+        const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+        const collectionContainer = document.getElementById('collectionContainer');
+        
+        // Отображение купленных подарков
+        collectionContainer.innerHTML = '';
+        purchasedGifts.forEach(gift => {
+            const giftElement = document.createElement('div');
+            giftElement.classList.add('gift');
+            giftElement.innerHTML = `
+                <div class="label">Куплено</div>
+                <img src="https://vocococo.github.io/gifts/${gift.id}.png" alt="${gift.id}">
+                <div class="price">⭐ ${gift.price}</div>
+            `;
+            collectionContainer.appendChild(giftElement);
+        });
+    }
+
+    // Обработчик клика по кнопке "Купить"
+    document.querySelectorAll(".buyButton").forEach(button => {
+        button.addEventListener("click", async function() {
+            const giftElement = button.closest('.gift');
+            let id = giftElement.dataset.id;
+            let price = giftElement.dataset.price;
+
+            // Отправка данных для оплаты
+            await tg.sendData(JSON.stringify({ gift_id: id, price: price }));
+
+            // После успешной оплаты, добавляем подарок в коллекцию
+            const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+            purchasedGifts.push({ id, price });
+            localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
+
+            // Обновление отображения вкладки коллекции
+            updatePurchasedTab();
+
+            // Оповещение о совершённой оплате
+            alert("Оплата прошла успешно! Ваш подарок добавлен в коллекцию.");
+        });
+    });
+
+    // Переключение вкладок
+    document.getElementById('storeTab').addEventListener('click', () => switchTab('store'));
+    document.getElementById('collectionTab').addEventListener('click', () => switchTab('collection'));
+
+    // Инициализация при загрузке страницы
+    window.onload = () => {
+        updatePurchasedTab();
+        switchTab('store');
+    };
+</script>
+</body>
+</html>
