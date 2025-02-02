@@ -2,34 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Магазин фото</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магазин подарков</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; }
-        .photo { margin-bottom: 20px; }
-        .photo img { width: 100px; height: 100px; }
-        .buy-button { margin-top: 10px; }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .gift { margin: 20px; padding: 10px; border: 1px solid #ddd; display: inline-block; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="photo">
-        <img src="photo1.jpg" alt="Фото 1">
-        <button class="buy-button" onclick="buyPhoto('photo1', 100)">Купить за 100 Stars</button>
+    <h1>Выберите подарок</h1>
+    <div id="gifts">
+        <div class="gift" data-id="mammoth" data-price="5000">🦣 Мамонт (5000⭐)</div>
+        <div class="gift" data-id="durov" data-price="2000">📦 Павел Дуров (2000⭐)</div>
+        <div class="gift" data-id="dog" data-price="500">🐶 Пёс (500⭐)</div>
+        <div class="gift" data-id="mic" data-price="300">🎤 Микрофон (300⭐)</div>
     </div>
-    <div class="photo">
-        <img src="photo2.jpg" alt="Фото 2">
-        <button class="buy-button" onclick="buyPhoto('photo2', 200)">Купить за 200 Stars</button>
-    </div>
+
     <script>
-        function buyPhoto(photoId, price) {
-            Telegram.WebApp.showInvoice({
-                description: 'Оплата фото через Telegram Stars',
-                payload: photoId,
-                provider_token: 'Ваш_токен_платежного_провайдера',
-                start_parameter: 'test-payment',
-                currency: 'XTR',
-                prices: [{ label: 'Стоимость фото', amount: price * 100 }]
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        document.querySelectorAll(".gift").forEach(gift => {
+            gift.addEventListener("click", () => {
+                let id = gift.dataset.id;
+                let price = gift.dataset.price;
+
+                tg.sendData(JSON.stringify({ gift_id: id, price: price }));
+                tg.close();
             });
-        }
+        });
     </script>
 </body>
 </html>
