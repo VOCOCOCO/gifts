@@ -86,25 +86,29 @@
     </div>
 
     <div id="storeContainer" class="container">
-        <div class="gift" data-id="mammoth" data-price="1">
+        <div class="gift" data-id="mammoth" data-price="5000">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mammoth.png" alt="Мамонт">
-            <div class="price">⭐ 1</div>
+            <div class="price">⭐ 5000</div>
+            <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="durov" data-price="2000">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/durov.png" alt="Дуров">
             <div class="price">⭐ 2000</div>
+            <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="dog" data-price="500">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/dog.png" alt="Пёс">
             <div class="price">⭐ 500</div>
+            <button class="buyButton">Купить</button>
         </div>
         <div class="gift" data-id="mic" data-price="300">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mic.png" alt="Микрофон">
             <div class="price">⭐ 300</div>
+            <button class="buyButton">Купить</button>
         </div>
     </div>
 
@@ -114,55 +118,58 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Переключение вкладок
         function switchTab(tab) {
-            document.getElementById('storeTab').classList.toggle('active', tab === 'store');
-            document.getElementById('collectionTab').classList.toggle('active', tab === 'collection');
-            document.getElementById('storeContainer').style.display = tab === 'store' ? 'flex' : 'none';
-            document.getElementById('collectionContainer').style.display = tab === 'collection' ? 'block' : 'none';
+            const storeTab = document.getElementById('storeTab');
+            const collectionTab = document.getElementById('collectionTab');
+            const storeContainer = document.getElementById('storeContainer');
+            const collectionContainer = document.getElementById('collectionContainer');
+
+            if (tab === 'store') {
+                storeTab.classList.add('active');collectionTab.classList.remove('active');
+                storeContainer.style.display = 'flex';
+                collectionContainer.style.display = 'none';
+            } else {
+                storeTab.classList.remove('active');
+                collectionTab.classList.add('active');
+                storeContainer.style.display = 'none';
+                collectionContainer.style.display = 'block';
+            }
         }
 
-        // Обновление вкладки "Коллекция" после покупки
-function updatePurchasedTab() {
-    const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-    const collectionContainer = document.getElementById('collectionContainer');
-    
-    // Отображение купленных подарков
-    collectionContainer.innerHTML = '';
-    purchasedGifts.forEach(gift => {
-        const giftElement = document.createElement('div');
-        giftElement.classList.add('gift');
-        giftElement.innerHTML = `
-            <div class="label">Куплено</div>
-            <img src="https://vocococo.github.io/gifts/${gift.id}.png" alt="${gift.id}">
-            <div class="price">⭐ ${gift.price}</div>
-        `;
-        collectionContainer.appendChild(giftElement);
-    });
-}
+        function updatePurchasedTab() {
+            const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+            const collectionContainer = document.getElementById('collectionContainer');
+            
+            collectionContainer.innerHTML = '';
+            purchasedGifts.forEach(gift => {
+                const giftElement = document.createElement('div');
+                giftElement.classList.add('gift');
+                giftElement.innerHTML = `
+                    <div class="label">Куплено</div>
+                    <img src="https://vocococo.github.io/gifts/${gift.id}.png" alt="${gift.id}">
+                    <div class="price">⭐ ${gift.price}</div>
+                `;
+                collectionContainer.appendChild(giftElement);
+            });
+        }
 
-// Обработчик клика по кнопке "Купить"
-document.querySelectorAll(".buyButton").forEach(button => {
-    button.addEventListener("click", async function() {
-        const giftElement = button.closest('.gift');
-        let id = giftElement.dataset.id;
-        let price = giftElement.dataset.price;
+        document.querySelectorAll(".buyButton").forEach(button => {
+            button.addEventListener("click", async function() {
+                const giftElement = button.closest('.gift');
+                let id = giftElement.dataset.id;
+                let price = giftElement.dataset.price;
 
-        // Отправка данных для оплаты
-        await tg.sendData(JSON.stringify({ gift_id: id, price: price }));
+                await tg.sendData(JSON.stringify({ gift_id: id, price: price }));
 
-        // После успешной оплаты, добавляем подарок в коллекцию
-        const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-        purchasedGifts.push({ id, price });
-        localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
+                const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+                purchasedGifts.push({ id, price });
+                localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
 
-        // Обновление отображения вкладки коллекции
-        updatePurchasedTab();
+                updatePurchasedTab();
 
-        // Оповещение о совершённой оплате
-        alert("Оплата прошла успешно! Ваш подарок добавлен в коллекцию.");
-    });
-});
+                alert("Оплата прошла успешно! Ваш подарок добавлен в коллекцию.");
+            });
+        });
 
         document.getElementById('storeTab').addEventListener('click', () => switchTab('store'));
         document.getElementById('collectionTab').addEventListener('click', () => switchTab('collection'));
