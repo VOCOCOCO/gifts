@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Магазин фото</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .photo { margin-bottom: 20px; }
+        .photo img { width: 100px; height: 100px; }
+        .buy-button { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="photo">
+        <img src="photo1.jpg" alt="Фото 1">
+        <button class="buy-button" onclick="buyPhoto('photo1', 100)">Купить за 100 Stars</button>
+    </div>
+    <div class="photo">
+        <img src="photo2.jpg" alt="Фото 2">
+        <button class="buy-button" onclick="buyPhoto('photo2', 200)">Купить за 200 Stars</button>
+    </div>
+    <script>
+        function buyPhoto(photoId, price) {
+            Telegram.WebApp.showInvoice({
+                description: 'Оплата фото через Telegram Stars',
+                payload: photoId,
+                provider_token: 'Ваш_токен_платежного_провайдера',
+                start_parameter: 'test-payment',
+                currency: 'XTR',
+                prices: [{ label: 'Стоимость фото', amount: price * 100 }]
+            });
+        }
+    </script>
+</body>
+</html>
