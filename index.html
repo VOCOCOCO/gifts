@@ -158,16 +158,15 @@
                 const giftElement = button.closest('.gift');
                 let id = giftElement.dataset.id;
                 let price = giftElement.dataset.price;
-
+        
+                // Отправка данных для оплаты
                 await tg.sendData(JSON.stringify({ gift_id: id, price: price }));
-
-                const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-                purchasedGifts.push({ id, price });
-                localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
-
-                updatePurchasedTab();
-
-                alert("Оплата прошла успешно! Ваш подарок добавлен в коллекцию.");
+        
+                // В этот момент подарок еще не добавлен в коллекцию, ждем завершения оплаты
+                // Уведомление пользователю
+                alert("Перейдите для оплаты подарка!");
+        
+                // Когда оплата завершена, мы получим событие успешной оплаты в сервере
             });
         });
 
