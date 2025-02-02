@@ -6,32 +6,181 @@
     <title>Магазин подарков</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .gift { margin: 20px; padding: 10px; border: 1px solid #ddd; display: inline-block; cursor: pointer; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            text-align: center;
+        }
+        .tab {
+            background: #222;
+            padding: 10px;
+            font-size: 18px;
+            color: white;
+            display: flex;
+            justify-content: center;
+            border-bottom: 2px solid #3498db;
+            cursor: pointer;
+        }
+        .tab div {
+            margin: 0 20px;
+            padding: 10px;
+        }
+        .tab div.active {
+            background-color: #3498db;
+            border-radius: 5px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 10px;
+        }
+        .gift {
+            background: #222;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            width: 150px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+        .gift img {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+        }
+        .price {
+            color: gold;
+            font-size: 18px;
+            margin-top: 5px;
+        }
+        .label {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: #3498db;
+            color: white;
+            padding: 2px 5px;
+            font-size: 12px;
+            border-radius: 5px;
+        }
+        .purchased {
+            padding: 20px;
+            margin-top: 20px;
+            background: #333;
+            border-radius: 10px;
+        }
+        .purchased .gift {
+            margin: 5px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
-    <h1>Выберите подарок</h1>
-    <div id="gifts">
-        <div class="gift" data-id="mammoth" data-price="5000">🦣 Мамонт (5000⭐)</div>
-        <div class="gift" data-id="durov" data-price="2000">📦 Павел Дуров (2000⭐)</div>
-        <div class="gift" data-id="dog" data-price="500">🐶 Пёс (500⭐)</div>
-        <div class="gift" data-id="mic" data-price="300">🎤 Микрофон (300⭐)</div>
+    <div class="tab">
+        <div id="storeTab" class="active">Подарки</div>
+        <div id="collectionTab">Коллекция</div>
     </div>
+
+    <div id="storeContainer" class="container">
+        <div class="gift" data-id="mammoth" data-price="5000">
+            <div class="label">Редкий</div>
+            <img src="https://vocococo.github.io/gifts/mammoth.png" alt="Мамонт">
+            <div class="price">⭐ 5000</div>
+        </div>
+        <div class="gift" data-id="durov" data-price="2000">
+            <div class="label">Редкий</div>
+            <img src="https://vocococo.github.io/gifts/durov.png" alt="Дуров">
+            <div class="price">⭐ 2000</div>
+        </div>
+        <div class="gift" data-id="dog" data-price="500">
+            <div class="label">Редкий</div>
+            <img src="https://vocococo.github.io/gifts/dog.png" alt="Пёс">
+            <div class="price">⭐ 500</div>
+        </div>
+        <div class="gift" data-id="mic" data-price="300">
+            <div class="label">Редкий</div>
+            <img src="https://vocococo.github.io/gifts/mic.png" alt="Микрофон">
+            <div class="price">⭐ 300</div>
+        </div>
+    </div>
+
+    <div id="collectionContainer" class="purchased" style="display:none;"></div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        document.querySelectorAll(".gift").forEach(gift => {
-            gift.addEventListener("click", () => {
-                let id = gift.dataset.id;
-                let price = gift.dataset.price;
+        // Функция для переключения вкладок
+        function switchTab(tab) {
+            const storeTab = document.getElementById('storeTab');
+            const collectionTab = document.getElementById('collectionTab');
+            const storeContainer = document.getElementById('storeContainer');
+            const collectionContainer = document.getElementById('collectionContainer');
 
-                tg.sendData(JSON.stringify({ gift_id: id, price: price }));
-                tg.close();
+            if (tab === 'store') {
+                storeTab.classList.add('active');
+                collectionTab.classList.remove('active');
+                storeContainer.style.display = 'flex';
+                collectionContainer.style.display = 'none';} else {
+                    storeTab.classList.remove('active');
+                    collectionTab.classList.add('active');
+                    storeContainer.style.display = 'none';
+                    collectionContainer.style.display = 'block';
+                }
+            }
+    
+            // Функция для обновления вкладки "Коллекция"
+            function updatePurchasedTab() {
+                const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+                const collectionContainer = document.getElementById('collectionContainer');
+                
+                // Отображение купленных подарков
+                collectionContainer.innerHTML = '';
+                purchasedGifts.forEach(gift => {
+                    const giftElement = document.createElement('div');
+                    giftElement.classList.add('gift');
+                    giftElement.innerHTML = `
+                        <div class="label">Куплено</div>
+                        <img src="https://vocococo.github.io/gifts/${gift.id}.png" alt="${gift.id}">
+                        <div class="price">⭐ ${gift.price}</div>
+                    `;
+                    collectionContainer.appendChild(giftElement);
+                });
+            }
+    
+            // Обработчик клика по подаркам
+            document.querySelectorAll(".gift").forEach(gift => {
+                gift.addEventListener("click", () => {
+                    let id = gift.dataset.id;
+                    let price = gift.dataset.price;
+    
+                    // Сохранение купленного подарка в localStorage
+                    const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+                    purchasedGifts.push({ id, price });
+                    localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
+    
+                    // Обновление отображения вкладки коллекции
+                    updatePurchasedTab();
+    
+                    // Отправка данных о подарке в Telegram
+                    tg.sendData(JSON.stringify({ gift_id: id, price: price }));
+                    tg.close();
+                });
             });
-        });
-    </script>
-</body>
-</html>
+    
+            // Переключение вкладок
+            document.getElementById('storeTab').addEventListener('click', () => switchTab('store'));
+            document.getElementById('collectionTab').addEventListener('click', () => switchTab('collection'));
+    
+            // Инициализация при загрузке страницы
+            window.onload = () => {
+                updatePurchasedTab();
+                switchTab('store');
+            };
+        </script>
+    </body>
+    </html>
