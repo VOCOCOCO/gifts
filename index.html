@@ -41,7 +41,7 @@
             border-radius: 10px;
             padding: 15px;
             margin: 10px;
-            width: 150px;
+            width: 45%; /* Изменено с 150px на 45% для двух в ряду */
             text-align: center;
             cursor: pointer;
             position: relative;
@@ -84,28 +84,36 @@
         <div class="gift" data-id="mammoth" data-price="1">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mammoth.png" alt="Мамонт">
-            <div class="price">⭐ 5000</div>
+            <div class="price">⭐️ 5000</div>
         </div>
         <div class="gift" data-id="durov" data-price="2000">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/durov.png" alt="Дуров">
-            <div class="price">⭐ 2000</div>
+            <div class="price">⭐️ 2000</div>
         </div>
         <div class="gift" data-id="dog" data-price="500">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/dog.png" alt="Пёс">
-            <div class="price">⭐ 500</div>
+            <div class="price">⭐️ 500</div>
         </div>
-        <div class="gift" data-id="mic" data-price="300">
+        <div class="gift" data-id="mic" data-price="1">
             <div class="label">Редкий</div>
-            <img src="https://vocococo.github.io/gifts/mic.png" alt="Микрофон">
-            <div class="price">⭐ 300</div>
+            <img src="65656.jpg" alt="Микрофон">
+            <div class="price">⭐️ 1</div>
         </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+
+        // Функция для генерации случайного номера из 5 цифр
+        function generateRandomNumber() {
+            return Math.floor(10000 + Math.random() * 90000);
+        }
+
+        // Получение сохранённых данных о номерах
+        let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
 
         // Обработчик клика по подарку
         document.querySelectorAll(".gift").forEach(gift => {
@@ -114,8 +122,15 @@
                 let id = giftElement.dataset.id;
                 let price = giftElement.dataset.price;
 
-                // Отправка данных для оплаты
-                await tg.sendData(JSON.stringify({ gift_id: id, price: price }));
+                // Генерация случайного номера
+                let giftNumber = generateRandomNumber();
+
+                // Сохранение номера
+                purchasedGifts.push({ gift_id: id, gift_number: giftNumber });
+                localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
+
+                // Отправка данных для оплаты с номером
+                await tg.sendData(JSON.stringify({ gift_id: id, price: price, gift_number: giftNumber }));
             });
         });
 
