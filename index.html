@@ -86,10 +86,10 @@
     </div>
 
     <div id="storeContainer" class="container">
-        <div class="gift" data-id="mammoth" data-price="1">
+        <div class="gift" data-id="mammoth" data-price="5000">
             <div class="label">Редкий</div>
             <img src="https://vocococo.github.io/gifts/mammoth.png" alt="Мамонт">
-            <div class="price">⭐ 1</div>
+            <div class="price">⭐ 5000</div>
         </div>
         <div class="gift" data-id="durov" data-price="2000">
             <div class="label">Редкий</div>
@@ -113,23 +113,21 @@
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-    
-        let selectedGift = null; // Храним текущий выбранный подарок
-    
+
+        // Переключение вкладок
         function switchTab(tab) {
             document.getElementById('storeTab').classList.toggle('active', tab === 'store');
             document.getElementById('collectionTab').classList.toggle('active', tab === 'collection');
-            document.getElementById('storeContainer').style.display = (tab === 'store') ? 'flex' : 'none';
-            document.getElementById('collectionContainer').style.display = (tab === 'collection') ? 'block' : 'none';
+            document.getElementById('storeContainer').style.display = tab === 'store' ? 'flex' : 'none';
+            document.getElementById('collectionContainer').style.display = tab === 'collection' ? 'block' : 'none';
         }
-    
+
         function updatePurchasedTab() {
-            const purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-            const collectionContainer = document.getElementById('collectionContainer');
-            
+            let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];let collectionContainer = document.getElementById('collectionContainer');
             collectionContainer.innerHTML = '';
+
             purchasedGifts.forEach(gift => {
-                const giftElement = document.createElement('div');
+                let giftElement = document.createElement('div');
                 giftElement.classList.add('gift');
                 giftElement.innerHTML = `
                     <div class="label">Куплено</div>
@@ -139,37 +137,46 @@
                 collectionContainer.appendChild(giftElement);
             });
         }
-    
+
+        // Отправка данных в бота
         document.querySelectorAll(".gift").forEach(gift => {
             gift.addEventListener("click", () => {
-                selectedGift = { id: gift.dataset.id, price: gift.dataset.price };
-    
-                // Отправляем данные в бота для оплаты
-                tg.sendData(JSON.stringify(selectedGift));
+                let id = gift.dataset.id;
+                let price = parseInt(gift.dataset.price, 10);
+
+                console.log("Отправка данных в бота:", { gift_id: id, price: price });
+
+                tg.sendData(JSON.stringify({ gift_id: id, price: price }));
                 tg.close();
             });
         });
-    
+
+        // Обработчик успешной оплаты
         window.addEventListener('message', function(event) {
-            if (event.data === "paymentSuccess" && selectedGift) {
+            console.log("Сообщение от бота:", event.data);
+
+            if (event.data === "paymentSuccess") {
+                let lastGift = JSON.parse(localStorage.getItem('lastGift'));
+                if (!lastGift) return;
+
                 let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-                purchasedGifts.push(selectedGift);
+                purchasedGifts.push(lastGift);
+
                 localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
-    
                 updatePurchasedTab();
                 switchTab('collection');
-    
+
                 alert("Оплата прошла успешно! Ваш подарок добавлен в коллекцию.");
             }
         });
-    
+
         document.getElementById('storeTab').addEventListener('click', () => switchTab('store'));
         document.getElementById('collectionTab').addEventListener('click', () => switchTab('collection'));
-    
+
         window.onload = () => {
             updatePurchasedTab();
             switchTab('store');
         };
     </script>
-    </body>
-    </html>
+</body>
+</html>
