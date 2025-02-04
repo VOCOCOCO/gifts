@@ -8,15 +8,15 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #111;
-            color: white;
+            background: #000000;
+            color: rgb(255, 255, 255);
             text-align: center;
         }
         .tab {
             background: #222;
             padding: 10px;
             font-size: 18px;
-            color: white;
+            color: rgb(0, 0, 0);
             display: flex;
             justify-content: center;
             border-bottom: 2px solid #3498db;
@@ -37,15 +37,15 @@
             padding: 10px;
         }
         .gift {
-            background: #222;
             border-radius: 10px;
             padding: 15px;
             margin: 10px;
-            width: 45%; /* Изменено с 150px на 45% для двух в ряду */
+            width: 45%;
             text-align: center;
             cursor: pointer;
             position: relative;
             box-shadow: 0 0 10px rgb(199, 253, 19);
+            transition: background 0.3s ease;
         }
         .gift img {
             width: 100px;
@@ -62,12 +62,11 @@
             top: 5px;
             left: 5px;
             background: #3498db;
-            color: white;
+            color: rgb(45, 21, 21);
             padding: 2px 5px;
             font-size: 12px;
             border-radius: 5px;
         }
-        /* Стиль для мобильных устройств */
         @media (max-width: 1000px) {
             .gift {
                 width: 33%;
@@ -77,35 +76,38 @@
 </head>
 <body>
     <div class="tab">
-        <div id="storeTab" class="active">Подарки</div>
+        <div id="storeTab" class="active">Стикеры</div>
     </div>
 
     <div id="storeContainer" class="container">
-        <div class="gift" data-id="mammoth" data-price="100">
+        <div class="gift" data-id="mammoth" data-price="100" data-bg="#1000">
             <div class="label">Редкий</div>
             <img src="photo_2025-02-03_17-24-09.jpg" alt="VOCO">
             <div class="price">⭐️ 100</div>
         </div>
-        <div class="gift" data-id="durov" data-price="70">
+        <div class="gift" data-id="durov" data-price="70" data-bg="#1000">
             <div class="label">Редкий</div>
             <img src="photo_2025-02-03_17-24-47.jpg" alt="VOCO">
             <div class="price">⭐️ 70</div>
         </div>
-        <div class="gift" data-id="dog" data-price="25">
+        <div class="gift" data-id="dog" data-price="25" data-bg="#1000">
             <div class="label">Редкий</div>
             <img src="photo_2025-02-02_22-21-28.jpg" alt="VOCO">
             <div class="price">⭐️ 25</div>
         </div>
-        <div class="gift" data-id="mic" data-price="10">
-            
+        <div class="gift" data-id="mic" data-price="10" data-bg="#1000">
             <img src="photo_2025-02-02_22-16-03.jpg" alt="VOCO">
             <div class="price">⭐️ 10</div>
         </div>
-        <div class="gift" data-id="cap" data-price="150
-            ">
+        <div class="gift" data-id="cap" data-price="150" data-bg="#1C1C1C">
             <div class="label">Редкий</div>
             <img src="photo_2025-02-03_17-40-00.jpg" alt="VOCO">
             <div class="price">⭐️ 150</div>
+        </div>
+        <div class="gift" data-id="Doodle" data-price="25" data-bg="#4630C0">
+            <div class="label">Изумрудный</div>
+            <img src="photo_2025-02-04_20-07-09.jpg" alt="VOCO">
+            <div class="price">⭐️ 25</div>
         </div>
     </div>
 
@@ -113,34 +115,31 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Функция для генерации случайного номера из 5 цифр
+        // Установка фона для каждого подарка
+        document.querySelectorAll(".gift").forEach(gift => {
+            let bgColor = gift.dataset.bg;
+            if (bgColor) {
+                gift.style.background = bgColor;
+            }
+        });
+
         function generateRandomNumber() {
             return Math.floor(10000 + Math.random() * 90000);
         }
 
-        // Получение сохранённых данных о номерах
-        let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-
-        // Обработчик клика по подарку
-        document.querySelectorAll(".gift").forEach(gift => {
+        let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];document.querySelectorAll(".gift").forEach(gift => {
             gift.addEventListener("click", async function() {
-                const giftElement = gift;
-                let id = giftElement.dataset.id;
-                let price = giftElement.dataset.price;
-
-                // Генерация случайного номера
+                let id = gift.dataset.id;
+                let price = gift.dataset.price;
                 let giftNumber = generateRandomNumber();
 
-                // Сохранение номера
                 purchasedGifts.push({ gift_id: id, gift_number: giftNumber });
                 localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
 
-                // Отправка данных для оплаты с номером
                 await tg.sendData(JSON.stringify({ gift_id: id, price: price, gift_number: giftNumber }));
             });
         });
 
-        // Функция для обработки успешной оплаты
         tg.onEvent('onPaymentSuccess', () => {
             alert("Спасибо за покупку! Все подарки хранятся у администратора.");
         });
