@@ -16,7 +16,7 @@
             background: #222;
             padding: 10px;
             font-size: 18px;
-            color: rgb(0, 0, 0);
+            color: rgb(255, 223, 223);
             display: flex;
             justify-content: center;
             border-bottom: 2px solid #3498db;
@@ -44,16 +44,20 @@
             text-align: center;
             cursor: pointer;
             position: relative;
-            box-shadow: 0 0 10px rgb(199, 253, 19);
+            box-shadow: 0 0 10px rgb(0, 255, 26);
             transition: background 0.3s ease;
+            animation: pulse 2s infinite;
+            background: rgba(0, 0, 0, 1); /* Полупрозрачный фон */
         }
         .gift img {
             width: 100px;
             height: 100px;
             border-radius: 10px;
+            display: block;
+            margin: 0 auto;
         }
         .price {
-            color: gold;
+            color: rgb(13, 255, 0); /* Зеленый цвет текста */
             font-size: 18px;
             margin-top: 5px;
         }
@@ -67,9 +71,26 @@
             font-size: 12px;
             border-radius: 5px;
         }
-        @media (max-width: 1000px) {
+        .tirage {
+            color: rgb(0, 255, 0);
+            font-size: 18px;
+            margin-top: 5px;
+            font-family: Arial, sans-serif ;
+        }
+        @media (max-width: 100px) {
             .gift {
-                width: 33%;
+                width: 5%;
+            }
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            13% {
+                transform: scale(1.003);
+            }
+            0.7% {
+                transform: scale(1);
             }
         }
     </style>
@@ -77,6 +98,7 @@
 <body>
     <div class="tab">
         <div id="storeTab" class="active">Стикеры</div>
+        <div id="tirageTab">Тиражи</div>
     </div>
 
     <div id="storeContainer" class="container">
@@ -111,11 +133,42 @@
         </div>
     </div>
 
+    <div id="tirageContainer" class="container" style="display:none;">
+        <div class="gift" data-id="mammoth" data-bg="#1C1C1C">
+            <div class="label">Редкий</div>
+            <img src="photo_2025-02-03_17-24-09.jpg" alt="VOCO">
+            <div class="tirage">1 из 35</div>
+        </div>
+        <div class="gift" data-id="durov" data-bg="#1C1C1C">
+            <div class="label">Редкий</div>
+            <img src="photo_2025-02-03_17-24-47.jpg" alt="VOCO">
+            <div class="tirage">1 из 45</div>
+        </div>
+        <div class="gift" data-id="dog" data-bg="#1C1C1C">
+            <div class="label">Редкий</div>
+            <img src="photo_2025-02-02_22-21-28.jpg" alt="VOCO">
+            <div class="tirage">1 из 60</div>
+        </div>
+        <div class="gift" data-id="mic" data-bg="#1C1C1C">
+            <img src="photo_2025-02-02_22-16-03.jpg" alt="VOCO">
+            <div class="tirage">1 из 150</div>
+        </div>
+        <div class="gift" data-id="cap" data-bg="#1C1C1C">
+            <div class="label">Редкий</div>
+            <img src="photo_2025-02-03_17-40-00.jpg" alt="VOCO">
+            <div class="tirage">1 из 20</div>
+        </div>
+        <div class="gift" data-id="Doodle" data-bg="#4630C0">
+            <div class="label">Изумрудный</div>
+            <img src="photo_2025-02-04_20-07-09.jpg" alt="VOCO">
+            <div class="tirage">1 из 45</div>
+        </div>
+    </div>
+
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Установка фона для каждого подарка
         document.querySelectorAll(".gift").forEach(gift => {
             let bgColor = gift.dataset.bg;
             if (bgColor) {
@@ -127,7 +180,8 @@
             return Math.floor(10000 + Math.random() * 90000);
         }
 
-        let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];document.querySelectorAll(".gift").forEach(gift => {
+        let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
+        document.querySelectorAll(".gift").forEach(gift => {
             gift.addEventListener("click", async function() {
                 let id = gift.dataset.id;
                 let price = gift.dataset.price;
@@ -143,6 +197,26 @@
         tg.onEvent('onPaymentSuccess', () => {
             alert("Спасибо за покупку! Все подарки хранятся у администратора.");
         });
+
+        const storeTab = document.getElementById("storeTab");
+        const tirageTab = document.getElementById("tirageTab");
+        const storeContainer = document.getElementById("storeContainer");
+        const tirageContainer = document.getElementById("tirageContainer");
+
+        storeTab.addEventListener("click", () => {
+            storeTab.classList.add("active");
+            tirageTab.classList.remove("active");
+            storeContainer.style.display = "flex";
+            tirageContainer.style.display = "none";
+        });
+
+        tirageTab.addEventListener("click", () => {
+            storeTab.classList.remove("active");
+            tirageTab.classList.add("active");
+            storeContainer.style.display = "none";
+            tirageContainer.style.display = "flex";
+        });
     </script>
 </body>
 </html>
+
