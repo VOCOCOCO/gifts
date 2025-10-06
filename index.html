@@ -1,222 +1,834 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин подарков</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #000000;
-            color: rgb(255, 255, 255);
-            text-align: center;
-        }
-        .tab {
-            background: #222;
-            padding: 10px;
-            font-size: 18px;
-            color: rgb(255, 223, 223);
-            display: flex;
-            justify-content: center;
-            border-bottom: 2px solid #3498db;
-            cursor: pointer;
-        }
-        .tab div {
-            margin: 0 20px;
-            padding: 10px;
-        }
-        .tab div.active {
-            background-color: #3498db;
-            border-radius: 5px;
-        }
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 10px;
-        }
-        .gift {
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px;
-            width: 35%;
-            text-align: center;
-            cursor: pointer;
-            position: relative;
-            box-shadow: 0 0 10px rgb(0, 255, 26);
-            transition: background 0.3s ease;
-            animation: pulse 2s infinite;
-            background: rgba(0, 0, 0, 1); /* Полупрозрачный фон */
-        }
-        .gift img {
-            width: 100px;
-            height: 100px;
-            border-radius: 10px;
-            display: block;
-            margin: 0 auto;
-        }
-        .price {
-            color: rgb(13, 255, 0); /* Зеленый цвет текста */
-            font-size: 18px;
-            margin-top: 5px;
-        }
-        .label {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            background: #3498db;
-            color: rgb(45, 21, 21);
-            padding: 2px 5px;
-            font-size: 12px;
-            border-radius: 5px;
-        }
-        .tirage {
-            color: rgb(0, 255, 0);
-            font-size: 18px;
-            margin-top: 5px;
-            font-family: Arial, sans-serif ;
-        }
-        @media (max-width: 100px) {
-            .gift {
-                width: 5%;
-            }
-        }
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-            13% {
-                transform: scale(1.006);
-            }
-            0.7% {
-                transform: scale(1);
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Рулетка и вкладки</title>
+
+  <!-- Подключаемые скрипты -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
+  <script src="https://unpkg.com/embla-carousel/embla-carousel.umd.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Стили -->
+  <style>
+    body {
+      overflow-y: 1000;
+      margin: 0;
+      padding: 0;
+      background-color: #0d1117;
+      color: white;
+      font-family: Arial, sans-serif;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0d1117; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+    #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #00bfff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #app { display: none; }
+
+    .tab-container { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 7px; background-color: #222; border-top: 2px solid #444; z-index: 1000; }
+    .tab { width: 40px; height: 40px; margin: 0 15px; background-color: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; border-radius: 5px; }
+    .tab:hover { background-color: #555; }
+    .tab.active { background-color: #95cdff1e; transform: scale(1.01); }
+    .tab img { width: 100%; height: 100%; object-fit: contain; }
+
+    .tab-content { display: none; padding-bottom: 80px; }
+    .tab-content.active { display: block; }
+
+    /* Стили для первой вкладки (не трогать содержимое) */
+    .top-bar { position: fixed; top: 0; left: 0; width: 100%; background: #161b22; padding: 6px 15px; display: flex; align-items: center; z-index: 1000; border-bottom: 1px solid #2e2e2e; }
+    .top-bar img { width: 36px; height: 36px; border-radius: 50%; margin-right: 10px; }
+    .top-bar span { font-size: 16px; font-weight: bold; }
+    .container { padding: 69px 20px 20px; max-width: 600px; margin: 0 auto; box-sizing: border-box; }
+    .news-banner { width: 100%; height: 56px; background: linear-gradient(to right, #36bfff, #5e9fff); border-radius: 15.5px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-weight: 600; font-size: 16px; margin-bottom: 12px; box-sizing: border-box; }
+    .news-banner button { background: white; color: #5e9fff; border: none; padding: 8px 12px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+    .mode-selector { display: flex; justify-content: center; background: #1c1c1e; border-radius: 16px; padding: 4px; margin-bottom: 12px; gap: 4px; }
+    .mode-option { flex: 1; padding: 8px 0; text-align: center; border-radius: 12px; color: white; font-weight: 650; font-size: 15px; transition: background-color 0.25s ease, color 0.25s ease; background: transparent; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .mode-option.active { background: #2c2c2e; }
+    .reel { position: relative; width: 100%; height: 130px; overflow: hidden; border-radius: 12px; background: rgba(255,255,255,0.06); backdrop-filter: blur(6px); margin-bottom: 20px; }
+    .gifts-wrapper { display: flex; height: 100%; align-items: center; will-change: transform; }
+    .gift { width: 100px; height: 100px; background: rgba(255,255,255,0.08); border-radius: 15px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin: 0 10px; }
+    .gift img { max-width: 90px; max-height: 90px; }
+    .pointer-line { position: absolute; top: 0; left: 50%; width: 4px; height: 100%; background: rgba(0,200,255,0.5); transform: translateX(-50%); z-index: 10; }
+    button#spinButton { background-color: #2ea1f8; border: none; color: white; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 5px; }
+    .extra-button { display: block; width: 100%; padding: 11px 24px; background-color: transparent; color: white; font-size: 15px; font-weight: bold; text-align: center; text-decoration: none; border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 9px; margin-top:5px; margin-bottom: 15px; box-sizing: border-box; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+    .extra-button:hover { background-color: rgba(255, 255, 255, 0.05); border-color: white; }
+
+    .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.908); backdrop-filter: blur(45px); display: none; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; padding: 20px; box-sizing: border-box; }
+    .modal-image { max-width: 90%; max-height: 60%; object-fit: contain; margin-top: -20px; margin-bottom: 15px; }
+    .modal h2 { font-size: 24px; color: #00ffcc; margin: 0; text-align: center; }
+    .modal button { font-size: 16px; margin-top: 30px; padding: 10px 26px; width: 90%; }
+
+    .swipe-text { font-size: 17px; margin-bottom: 12px; padding-left: 10px; font-weight: bold; }
+    .embla { overflow: hidden; width: 100%; }
+    .embla__container { display: flex; }
+    .embla__slide { flex: 0 0 auto; width: 70px; height: 70px; margin-right: 10px; background: rgba(255,255,255,0.08); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .embla__slide img { max-width: 60px; max-height: 60px; }
+    .footer-text { font-size: 12px; color: #888; text-align: center; margin: 5% 0 10px; }
+
+    .extra-button.outlined { background-color: transparent; border: 2px solid white; color: white; font-weight: bold; text-align: center; font-size: 15px; padding: 10px 24px; border-radius: 8px; text-decoration: none; display: inline-block; width: 100%; margin-top: 5px; box-sizing: border-box; transition: all 0.2s ease; }
+    .extra-button.outlined:hover { background-color: rgba(255,255,255,0.05); border-color: #ffffff; }
+
+    /* ========== Стили для вкладки 2 (новые) ========== */
+    .tab2-wrapper {
+      padding: 60px 20px 120px;
+      max-width: 700px;
+      margin: 0 auto;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .rules-btn {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1100;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .lotto-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      justify-items: center;
+      align-items: center;
+    }
+
+    /* каждый кубик */
+    .cube {
+      width: 160px;
+      height: 160px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: visible;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      touch-action: none; /* для правильной работы удержания на мобильных */
+      user-select: none;
+    }
+    .cube .lottie-holder {
+      width: 120px;
+      height: 120px;
+      pointer-events: none; /* чтобы нажатие шло на cube при проигрывании lottie */
+    }
+    .cube .hold-hint {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #aaa;
+    }
+    .hold-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 2px transparent;
+      transition: box-shadow 0.12s linear;
+    }
+
+    .hold-progress {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      overflow: hidden;
+    }
+    .hold-progress > .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #00f, #0ff);
+      transition: width 0.05s linear;
+    }
+
+    /* Canvas particles */
+    .particles-canvas {
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* маленькие модальные окна результата */
+    .mini-modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      max-width: calc(100% - 40px);
+      background: #0f1720;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+      padding: 14px;
+      display: none;
+      z-index: 1200;
+      text-align: center;
+    }
+    .mini-modal img { width: 140px; height: auto; margin: 8px auto; display: block; border-radius: 10px; }
+    .mini-modal .title { font-size: 18px; color: #fff; margin-top: 6px; font-weight: 700; }
+    .mini-modal .subtitle { font-size: 13px; color: #b9c2c9; margin-top: 6px; }
+    .mini-modal .code-btn {
+      margin-top: 12px;
+      display: inline-block;
+      background: #0ea5a4;
+      color: #04111a;
+      font-weight: 800;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: all;
+    }
+    .mini-modal .copy-small { display:block; font-size: 11px; color: #9aa3a9; margin-top: 6px; }
+
+    @media (max-width: 520px) {
+      .lotto-grid { grid-template-columns: repeat(2, 1fr); }
+      .cube { width: 140px; height: 140px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="tab">
-        <div id="storeTab" class="active">Стикеры</div>
-        <div id="tirageTab">Тиражи</div>
+  <div id="loader">
+    <div class="spinner"></div>
+  </div>
+
+  <div id="app">
+    <!-- Вкладка 1 — Рулетка -->
+<div class="tab-content active" id="tab1">
+  <div class="top-bar">
+    <img id="profilePic" src="" alt="Profile Picture">
+    <span id="profileName">User</span>
+  </div>
+
+  <div class="container">
+    <div class="news-banner">
+      <span>Turbo Gifts here!</span>
+      <button onclick="window.location.href='https://t.me/AutoGiftysBot'">Open Gifts</button>
     </div>
 
-    <div id="storeContainer" class="container">
-        <div class="gift" data-id="mammoth" data-price="100" data-bg="#1C1C1C">
-            <div class="label">Редкий</div>
-            <img src="photo_2025-02-03_17-24-09.jpg" alt="VOCO">
-            <div class="price">⭐️ 100</div>
-        </div>
-        <div class="gift" data-id="durov" data-price="70" data-bg="#1C1C1C">
-            <div class="label">Редкий</div>
-            <img src="photo_2025-02-03_17-24-47.jpg" alt="VOCO">
-            <div class="price">⭐️ 70</div>
-        </div>
-        <div class="gift" data-id="dog" data-price="25" data-bg="#1C1C1C">
-            <div class="label">Редкий</div>
-            <img src="photo_2025-02-02_22-21-28.jpg" alt="VOCO">
-            <div class="price">⭐️ 25</div>
-        </div>
-        <div class="gift" data-id="mic" data-price="10" data-bg="#1C1C1C">
-            <img src="photo_2025-02-02_22-16-03.jpg" alt="VOCO">
-            <div class="price">⭐️ 10</div>
-        </div>
-        <div class="gift" data-id="cap" data-price="150" data-bg="#1C1C1C">
-            <div class="label">Редкий</div>
-            <img src="photo_2025-02-03_17-40-00.jpg" alt="VOCO">
-            <div class="price">⭐️ 150</div>
-        </div>
-        <div class="gift" data-id="Doodle" data-price="25" data-bg="#4630C0">
-            <div class="label">Изумрудный</div>
-            <img src="photo_2025-02-04_20-07-09.jpg" alt="VOCO">
-            <div class="price">⭐️ 25</div>
-        </div>
+    <div class="mode-selector">
+      <div class="mode-option active" data-price="35" data-link="https://t.me/$zLCg1Xa26UlZDQAA5UvFqNpOjqo">35★</div>
+      <div class="mode-option" data-price="50" data-link="https://t.me/$6k1Z8Ha26UlaDQAAVovivYcjdqU">50★</div>
+      <div class="mode-option" data-price="150" data-link="https://t.me/$SR_sP3a26UlbDQAAvm5lKSwJrGg">150★</div>
     </div>
 
-    <div id="tirageContainer" class="container" style="display:none;">
-        <div class="gift" data-id="mammoth" data-bg="#1C1C1C">
-            <div class="label">Редкий</div>
-            <img src="photo_2025-02-03_17-24-09.jpg" alt="VOCO">
-            <div class="tirage">1 из 35</div>
-        </div>
-        <div class="gift" data-id="durov" data-bg="#1C1C1C">
-            <div class="label">Редкий</div>
-            <img src="photo_2025-02-03_17-24-47.jpg" alt="VOCO">
-            <div class="tirage">1 из 45</div>
-        </div>
-        <div class="gift" data-id="dog" data-bg="#1C1C1C">
-            <div class="label">Редкий</div>
-            <img src="photo_2025-02-02_22-21-28.jpg" alt="VOCO">
-            <div class="tirage">1 из 60</div>
-        </div>
-        <div class="gift" data-id="mic" data-bg="#1C1C1C">
-            <img src="photo_2025-02-02_22-16-03.jpg" alt="VOCO">
-            <div class="tirage">1 из 150</div>
-        </div>
-        <div class="gift" data-id="cap" data-bg="#1C1C1C">
-            <div class="label">Редкий</div>
-            <img src="photo_2025-02-03_17-40-00.jpg" alt="VOCO">
-            <div class="tirage">1 из 20</div>
-        </div>
-        <div class="gift" data-id="Doodle" data-bg="#4630C0">
-            <div class="label">Изумрудный</div>
-            <img src="photo_2025-02-04_20-07-09.jpg" alt="VOCO">
-            <div class="tirage">1 из 45</div>
-        </div>
+    <div class="reel" id="reel">
+      <div class="pointer-line"></div>
+      <div class="gifts-wrapper" id="giftsTrack"></div>
     </div>
 
-    <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
+    <button id="spinButton">Try your luck 35★</button>
+    <a href="https://t.me/StarsotekaRobot?start=d846ae70" class="extra-button outlined">Купить 50★ за 79₽</a>
+    <div class="swipe-roulette-container">
+      <div class="swipe-text">What can I drop?</div>
+      <div class="embla" id="embla">
+        <div class="embla__container" id="emblaTrack"></div>
+      </div>
+    </div>
+  </div>
 
-        document.querySelectorAll(".gift").forEach(gift => {
-            let bgColor = gift.dataset.bg;
-            if (bgColor) {
-                gift.style.background = bgColor;
-            }
-        });
+  <div class="modal" id="modal">
+    <img id="modalImage" class="modal-image" src="nothing_drop.png" alt="Prize image" style="display: none;">
+    <div class="modal-animation" id="modalLottie"></div>
+    <h2>Try your luck next time 🍀</h2>
+    <button id="closeModal">Закрыть</button>
+  </div>
 
-        function generateRandomNumber() {
-            return Math.floor(10000 + Math.random() * 90000);
+  <footer class="footer-text">© 2025 All rights reserved</footer>
+</div>
+
+<!-- Вкладка 2 — НОВАЯ (не трогай таб1 содержимое) -->
+<div class="tab-content" id="tab2">
+  <button class="rules-btn" id="openRules">Правила</button>
+
+  <div class="tab2-wrapper">
+    <h2 style="margin:0 0 6px; font-size:20px; font-weight:700; text-align:center;">Кубики удачи</h2>
+    <div style="color:#bfc9cf; font-size:14px; text-align:center; margin-bottom:6px;">Нажми -> оплата -> удерживай 2.5с, чтобы открыть кубик</div>
+
+    <div class="lotto-grid" id="lottoGrid">
+      <!-- Кубики будут сгенерированы скриптом -->
+    </div>
+  </div>
+
+  <!-- канва для частиц (одна на всю вкладку, рисуем в координатах кубика во время удержания) -->
+  <canvas id="particlesCanvas" class="particles-canvas"></canvas>
+
+  <!-- Результирующее маленькое модальное окно (не полноэкранное) -->
+  <div id="resultModal" class="mini-modal">
+    <img id="resultImage" src="" alt="result" />
+    <div class="title" id="resultTitle">Не в этот раз...</div>
+    <div class="subtitle" id="resultSubtitle">Попробуй снова</div>
+    <div style="margin-top:8px;">
+      <div id="winCodeContainer" style="display:none;">
+        <div class="code-btn" id="winCode">12345</div>
+        <div class="copy-small" id="copyHint">Нажмите чтобы скопировать и отправьте данный код @vovnx для получения подарка</div>
+      </div>
+      <button id="closeResult" style="margin-top:10px; padding:8px 12px; border-radius:8px;">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- Правила маленькое модальное -->
+  <div id="rulesModal" class="mini-modal" style="width:300px;">
+    <div style="font-weight:800; font-size:16px; margin-bottom:8px;">Правила</div>
+    <div style="color:#bfc9cf; font-size:13px; text-align:left;">1) Нажми на кубик. 2) Откроется окно оплаты. 3) После успешной оплаты удерживай 2.5 секунды. 4) Возможен выигрыш с шансом 30%.</div>
+    <button id="closeRulesBtn" style="margin-top:12px; padding:8px 12px; border-radius:8px;">Закрыть</button>
+  </div>
+</div>
+
+<!-- Переключатель вкладок -->
+<div class="tab-container">
+  <div class="tab" onclick="changeTab(1)">
+    <img src="3664550.png" alt="Tab 1" />
+  </div>
+  <div class="tab" onclick="changeTab(2)">
+    <img src="Монета.png" alt="Tab 2" />
+  </div>
+</div>
+  </div>
+
+<!-- Скрипты -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script src="https://unpkg.com/embla-carousel/embla-carousel.umd.js"></script>
+
+<script>
+  // ------------------ профиль (оставлено без изменений) ------------------
+  function updateProfile() {
+    if (window.Telegram && Telegram.WebApp) {
+      const user = Telegram.WebApp.initDataUnsafe?.user;
+      if (user) {
+        document.getElementById("profileName").textContent = user.first_name || "User";
+        if (user.photo_url) {
+          document.getElementById("profilePic").src = user.photo_url;
         }
+      }
+    }
+  }
 
-        let purchasedGifts = JSON.parse(localStorage.getItem('purchasedGifts')) || [];
-        document.querySelectorAll(".gift").forEach(gift => {
-            gift.addEventListener("click", async function() {
-                let id = gift.dataset.id;
-                let price = gift.dataset.price;
-                let giftNumber = generateRandomNumber();
+  // ------------------ вкладки ------------------
+  function changeTab(tabNumber) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.getElementById('tab' + tabNumber).classList.add('active');
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab')[tabNumber - 1].classList.add('active');
 
-                purchasedGifts.push({ gift_id: id, gift_number: giftNumber });
-                localStorage.setItem('purchasedGifts', JSON.stringify(purchasedGifts));
+    // если открыли вкладку 2 — инициализируем (если нужно)
+    if (tabNumber === 2) {
+      initTab2();
+    }
+  }
 
-                await tg.sendData(JSON.stringify({ gift_id: id, price: price, gift_number: giftNumber }));
-            });
+  // ------------------ Подарки / рулетка — оставлено как было ------------------
+  const gifts = [
+    "1CHzB4K5FantEZu.png", "680e5d8f8bf66.png", "toTNAm2yurDAiqK.png", "U8z9ivaScNyJ86V.png",
+    "Oj0IhQW5D5QyVFf.png", "PQM9MVSTAF7sQ12.png", "nothing_drop.png",
+    "pudbsohqxfD98gc.png", "bvK9PmcyFgAh4gP.png", "q2c0eUx5k8krA97.png"
+  ];
+
+  const fullGifts = [];
+  for (let i = 0; i < 10; i++) fullGifts.push(...gifts);
+
+  const giftsTrack = document.getElementById("giftsTrack");
+  fullGifts.forEach(g => {
+    const div = document.createElement("div");
+    div.className = "gift";
+    const img = document.createElement("img");
+    img.src = g;
+    div.appendChild(img);
+    giftsTrack.appendChild(div);
+  });
+
+  // --- Модальное изображение ---
+  const modalImage = document.getElementById("modalImage");
+  modalImage.src = "nothing_drop.png";
+  modalImage.style.display = "block";
+
+  // --- Режимы ---
+  const spinButton = document.getElementById("spinButton");
+  const options = document.querySelectorAll('.mode-option');
+  let selectedLink = "https://t.me/$OEtEnkq5wEppDQAAuOeA4xzWyR4";
+
+  options.forEach(option => {
+    option.addEventListener('click', () => {
+      options.forEach(o => o.classList.remove('active'));
+      option.classList.add('active');
+      const price = option.getAttribute('data-price');
+      selectedLink = option.getAttribute('data-link');
+      spinButton.textContent = `Try your luck ${price}★`;
+    });
+  });
+
+  // --- Кнопка запуска рулетки ---
+  let spinning = false;
+  spinButton.onclick = () => {
+    if (spinning) return;
+    Telegram.WebApp.openInvoice(selectedLink);
+  };
+
+  // --- После оплаты (для вкладки 1) ---
+  Telegram.WebApp.onEvent("invoiceClosed", function(event) {
+    if (event.status === "paid") {
+      // поведение вкладки1 — как было
+      spinning = true;
+      const prize = "nothing_drop.png";
+      const idx = fullGifts.findIndex((v, i) => v === prize) + 5 * gifts.length;
+      const offset = idx * 120 - (document.getElementById("reel").offsetWidth / 2 - 60);
+      gsap.to(giftsTrack, {
+        x: -offset,
+        duration: 6,
+        ease: "power5.inOut",
+        onComplete() {
+          document.getElementById("modal").style.display = "flex";
+          document.getElementById("modalLottie").innerHTML = "";
+          lottie.loadAnimation({
+            container: document.getElementById("modalLottie"),
+            renderer: "svg",
+            loop: true,
+            autoplay: true,
+            path: "https://lottie.host/2e7b308e-92b6-495c-a96b-cf93e02eb7b4/BiwZQ7vQaf.json"
+          });
+        }
+      });
+    }
+  });
+
+  document.getElementById("closeModal").onclick = () => {
+    document.getElementById("modal").style.display = "none";
+    gsap.set(giftsTrack, { x: 0 });
+    spinning = false;
+  };
+
+  // Embla
+  const emblaTrack = document.getElementById("emblaTrack");
+  gifts.forEach(g => {
+    const slide = document.createElement("div");
+    slide.className = "embla__slide";
+    const img = document.createElement("img");
+    img.src = g;
+    slide.appendChild(img);
+    emblaTrack.appendChild(slide);
+  });
+
+  EmblaCarousel(document.getElementById("embla"), {
+    loop: false,
+    align: "start",
+    dragFree: true
+  });
+
+  // --- Лоадер ---
+  window.addEventListener('load', function () {
+    const MIN_LOADING_TIME = 1500;
+    const startTime = Date.now();
+
+    const checkReady = () => {
+      if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+        setTimeout(() => {
+          Telegram.WebApp.ready();
+          document.getElementById('loader').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+        }, remaining);
+      } else {
+        setTimeout(checkReady, 100);
+      }
+    };
+
+    checkReady();
+  });
+
+  // --- Инициализация ---
+  updateProfile();
+  changeTab(1);
+
+  // ------------------ ВКЛАДКА 2: логика кубиков, оплата, удержание, частицы, модалки ------------------
+
+  // Массивы для lottie и инвойсов — подставь свои ссылки сюда
+  // Пример: "https://assets9.lottiefiles.com/packages/lf20_XXXXX.json"
+  const lottieLinks = [
+    "https://assets9.lottiefiles.com/packages/lf20_1.json", // замените
+    "https://assets9.lottiefiles.com/packages/lf20_2.json",
+    "https://assets9.lottiefiles.com/packages/lf20_3.json",
+    "https://assets9.lottiefiles.com/packages/lf20_4.json",
+    "https://assets9.lottiefiles.com/packages/lf20_5.json"
+  ];
+
+  // Платежные ссылки для каждого лотти (тебе нужно подставить свои openInvoice ссылки)
+  const invoiceLinks = [
+    "https://t.me/$invoice_link_1", // замените
+    "https://t.me/$invoice_link_2",
+    "https://t.me/$invoice_link_3",
+    "https://t.me/$invoice_link_4",
+    "https://t.me/$invoice_link_5"
+  ];
+
+  // Настройки удержания
+  const HOLD_REQUIRED_MS = 2500; // 2.5 секунды
+  const WIN_CHANCE = 0.30; // 30% шанс при каждом открытии
+
+  // Состояния
+  let tab2Initialized = false;
+  let lastPaymentIndex = null; // индекс кубика для которого была успешная оплата и ожидается удержание
+  let paymentPendingFor = null; // индекс для которого открыт инвойс (чтобы сверять при invoiceClosed)
+
+  // DOM
+  const lottoGrid = document.getElementById("lottoGrid");
+  const particlesCanvas = document.getElementById("particlesCanvas");
+  const resultModal = document.getElementById("resultModal");
+  const resultImage = document.getElementById("resultImage");
+  const resultTitle = document.getElementById("resultTitle");
+  const resultSubtitle = document.getElementById("resultSubtitle");
+  const winCodeContainer = document.getElementById("winCodeContainer");
+  const winCodeEl = document.getElementById("winCode");
+  const closeResult = document.getElementById("closeResult");
+  const openRulesBtn = document.getElementById("openRules");
+  const rulesModal = document.getElementById("rulesModal");
+  const closeRulesBtn = document.getElementById("closeRulesBtn");
+
+  // particles canvas context
+  let pcCtx, pcW, pcH;
+  function resizeCanvas() {
+    particlesCanvas.width = innerWidth * devicePixelRatio;
+    particlesCanvas.height = innerHeight * devicePixelRatio;
+    particlesCanvas.style.width = innerWidth + "px";
+    particlesCanvas.style.height = innerHeight + "px";
+    pcCtx = particlesCanvas.getContext('2d');
+    pcCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+    pcW = innerWidth; pcH = innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // Простая система частиц
+  class Particle {
+    constructor(x,y){
+      this.x = x; this.y = y;
+      const ang = Math.random()*Math.PI*2;
+      const speed = 30 + Math.random()*180;
+      this.vx = Math.cos(ang)*speed;
+      this.vy = Math.sin(ang)*speed;
+      this.life = 800 + Math.random()*600;
+      this.size = 4 + Math.random()*6;
+      this.ttl = this.life;
+      this.color = `rgba(255,255,255,${0.9 + Math.random()*0.1})`;
+    }
+    update(dt){
+      const s = dt/16;
+      this.x += this.vx * (dt/1000);
+      this.y += this.vy * (dt/1000) + 60*(dt/1000); // gravity-like
+      this.ttl -= dt;
+    }
+    draw(ctx){
+      const t = Math.max(0, this.ttl / this.life);
+      ctx.globalAlpha = t;
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size * (0.6 + (1-t)*0.8), 0, Math.PI*2);
+      ctx.fill();
+    }
+    alive(){ return this.ttl > 0; }
+  }
+  let particles = [];
+  let lastFrame = performance.now();
+  let particlesActive = false;
+  function particleLoop(now){
+    const dt = now - lastFrame;
+    lastFrame = now;
+    if(particlesActive){
+      // update
+      particles.forEach(p => p.update(dt));
+      particles = particles.filter(p => p.alive());
+      // clear
+      pcCtx.clearRect(0,0,pcW,pcH);
+      // draw
+      particles.forEach(p => p.draw(pcCtx));
+      if(particles.length===0){
+        particlesActive=false;
+        pcCtx.clearRect(0,0,pcW,pcH);
+      }
+    }
+    requestAnimationFrame(particleLoop);
+  }
+  particleLoop(lastFrame);
+
+  // Вспомог: спавн частиц в точке x,y
+  function spawnParticles(x,y,amount=60){
+    particlesActive = true;
+    for(let i=0;i<amount;i++){
+      particles.push(new Particle(x, y));
+    }
+  }
+
+  // Функция генерирует 5 кубиков в случайном порядке
+  function initTab2(){
+    if(tab2Initialized) return;
+    tab2Initialized = true;
+
+    // перемешиваем индексы
+    const indices = [0,1,2,3,4].sort(()=>Math.random()-0.5);
+
+    indices.forEach((srcIdx, displayIdx) => {
+      const cube = document.createElement('div');
+      cube.className = 'cube';
+      cube.dataset.index = srcIdx; // индекс в исходных массивах
+      cube.innerHTML = `
+        <div class="lottie-holder" id="lottie-${srcIdx}"></div>
+        <div class="hold-overlay"></div>
+        <div class="hold-progress"><div class="bar"></div></div>
+        <div class="hold-hint">Нажми и держи</div>
+      `;
+      lottoGrid.appendChild(cube);
+
+      // Инициализируем lottie через lottie-web в контейнере
+      try {
+        lottie.loadAnimation({
+          container: document.getElementById(`lottie-${srcIdx}`),
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          path: lottieLinks[srcIdx] || lottieLinks[0]
         });
+      } catch(e){
+        // если lottie не загрузится — можно оставить пусто
+        console.warn("lottie load error", e);
+      }
 
-        tg.onEvent('onPaymentSuccess', () => {
-            alert("Спасибо за покупку! Все подарки хранятся у администратора.");
-        });
+      setupCubeEvents(cube, srcIdx);
+    });
+  }
 
-        const storeTab = document.getElementById("storeTab");
-        const tirageTab = document.getElementById("tirageTab");
-        const storeContainer = document.getElementById("storeContainer");
-        const tirageContainer = document.getElementById("tirageContainer");
+  // События для одного кубика: оплата -> ожидание удержания -> удержание 2.5с -> результат
+  function setupCubeEvents(cubeEl, srcIdx){
+    // pointer events (поддержка мыши + touch)
+    let holdTimer = null;
+    let holdStart = null;
+    let holding = false;
+    let holdProgressBar = cubeEl.querySelector('.hold-progress > .bar');
+    const overlay = cubeEl.querySelector('.hold-overlay');
 
-        storeTab.addEventListener("click", () => {
-            storeTab.classList.add("active");
-            tirageTab.classList.remove("active");
-            storeContainer.style.display = "flex";
-            tirageContainer.style.display = "none";
-        });
+    // событие нажатия: открываем инвойс сразу
+    cubeEl.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      // откроем инвойс для этого srcIdx
+      paymentPendingFor = srcIdx;
+      // открываем инвойс - замените на вашу ссылку
+      const invoiceLink = invoiceLinks[srcIdx] || invoiceLinks[0];
+      try {
+        Telegram.WebApp.openInvoice(invoiceLink);
+      } catch(err){
+        // Если Telegram API недоступен в обычном браузере, можно симулировать оплату (для теста)
+        console.warn("openInvoice failed (maybe running in non-Telegram environment):", err);
+        // В тестовом режиме симулируем успешную оплату через 1s:
+        setTimeout(() => {
+          // вызвать поведение как будто оплата прошла
+          handleInvoiceClosed({ status: "paid", forIndex: srcIdx });
+        }, 700);
+      }
+    });
 
-        tirageTab.addEventListener("click", () => {
-            storeTab.classList.remove("active");
-            tirageTab.classList.add("active");
-            storeContainer.style.display = "none";
-            tirageContainer.style.display = "flex";
-        });
-    </script>
+    // Pointer up/cancel: отменяем удержание если не завершено
+    const cancelHold = () => {
+      if(holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      holding = false;
+      holdStart = null;
+      holdProgressBar.style.width = '0%';
+      overlay.style.boxShadow = 'inset 0 0 0 2px transparent';
+    };
+
+    // Запуск удержания: только если lastPaymentIndex === srcIdx (оплата прошла)
+    function tryStartHold(e){
+      if(lastPaymentIndex !== srcIdx) return;
+      if(holding) return;
+      holding = true;
+      holdStart = performance.now();
+      overlay.style.boxShadow = 'inset 0 0 0 2px rgba(0,200,255,0.18)';
+      // animate progress
+      const start = performance.now();
+      holdTimer = setInterval(() => {
+        const elapsed = performance.now() - start;
+        const pct = Math.min(100, (elapsed / HOLD_REQUIRED_MS) * 100);
+        holdProgressBar.style.width = pct + '%';
+        if(elapsed >= HOLD_REQUIRED_MS){
+          clearInterval(holdTimer);
+          holdTimer = null;
+          // spawn particles from center of cube
+          const rect = cubeEl.getBoundingClientRect();
+          const cx = rect.left + rect.width/2;
+          const cy = rect.top + rect.height/2;
+          spawnParticles(cx, cy, 120);
+          // завершение удержания — показать результат
+          finalizeOpen(srcIdx);
+          holding = false;
+          holdProgressBar.style.width = '100%';
+          overlay.style.boxShadow = 'inset 0 0 0 2px transparent';
+        }
+      }, 20);
+    }
+
+    // Слушатели pointerup/leave/cancel
+    cubeEl.addEventListener('pointerup', (e) => {
+      // если удержание идет — отменяем (если ещё не завершился)
+      cancelHold();
+    });
+    cubeEl.addEventListener('pointercancel', cancelHold);
+    cubeEl.addEventListener('pointerleave', cancelHold);
+
+    // Когда пользователь касается/нажимает и оплата подтверждена, стартуем удержание
+    // для мобильных может понадобиться начать при pointerdown, но чтобы не конфликтовать с открытием инвойса,
+    // мы начинаем удержание только после того, как пришёл статус "paid" и lastPaymentIndex установлен.
+    // Поэтому обработчик pointerdown выше просто открывает инвойс, а здесь добавим pointerdown listener для начала hold,
+    cubeEl.addEventListener('pointerdown', (e) => {
+      // если оплата уже прошла для этого кубика, начнем удержание после короткого таймаута,
+      // иначе — ничего (пользователь сначала должен оплатить).
+      setTimeout(() => {
+        tryStartHold(e);
+      }, 220); // небольшой буфер для стабильности на мобильных
+    });
+
+    // если пользователь явно нажал на кубик и оплатил раньше (т.е. lastPaymentIndex уже установлен),
+    // можно подсказать визуально:
+    // (добавлять визуал при условии lastPaymentIndex === srcIdx)
+  }
+
+  // Обработчик завершения инвойса (слушаем global)
+  function handleInvoiceClosed(event){
+    // event может быть объектом Telegram.WebApp event, либо наш искусственный (forIndex)
+    // в Telegram WebApp API, на некоторых платформах можно слушать invoiceClosed
+    // Мы будем устанавливать lastPaymentIndex если статус == paid и paymentPendingFor совпадает.
+    const status = event.status;
+    const forIndex = (typeof event.forIndex !== 'undefined') ? event.forIndex : paymentPendingFor;
+    if(status === "paid"){
+      lastPaymentIndex = forIndex;
+      // уведомить пользователя визуально: включаем небольшой подсвет кубика
+      const cube = document.querySelector(`.cube[data-index='${forIndex}']`);
+      if(cube){
+        const overlay = cube.querySelector('.hold-overlay');
+        overlay.style.boxShadow = 'inset 0 0 0 3px rgba(0,200,255,0.2)';
+        // подсказка: можно удерживать
+        const hint = cube.querySelector('.hold-hint');
+        if(hint) hint.textContent = 'Удерживай 2.5с';
+      }
+      // Сбрасываем paymentPendingFor
+      paymentPendingFor = null;
+    } else {
+      // оплата отменена/неуспешна — ничего не делаем
+      paymentPendingFor = null;
+    }
+  }
+
+  // Подключаем к глобальному слушателю Telegram, если есть
+  try {
+    Telegram.WebApp.onEvent("invoiceClosed", function(event) {
+      // event.status === "paid" | "cancelled" | "failed"
+      handleInvoiceClosed(event);
+    });
+  } catch(e){
+    // если Telegram недоступен, ничего страшного — для теста можно вызывать handleInvoiceClosed вручную
+    console.warn("Telegram.WebApp.onEvent not available in this environment");
+  }
+
+  // Финал открытия кубика (после удержания завершилось)
+  function finalizeOpen(srcIdx){
+    // Определяем победа/проигрыш случайно с шансом WIN_CHANCE
+    const win = Math.random() < WIN_CHANCE;
+    if(win){
+      // выигрываем: другое фото + текст + код
+      resultImage.src = "https://via.placeholder.com/400x250.png?text=Desk+Calendar"; // замени на своё изображение при желании
+      resultTitle.textContent = "Вы выиграли Desk Calendar!";
+      resultSubtitle.textContent = "Скопируйте код и отправьте его @vovnx";
+      const code = String(Math.floor(10000 + Math.random()*90000)); // 5 цифр
+      winCodeEl.textContent = code;
+      winCodeContainer.style.display = 'block';
+      // Показываем мини-модалку
+      showResultModal();
+
+      // клик по коду — копирование в буфер обмена
+      winCodeEl.onclick = () => {
+        navigator.clipboard.writeText(code).then(() => {
+          // небольшая подсказка
+          winCodeEl.textContent = "Скопировано!";
+          setTimeout(()=> winCodeEl.textContent = code, 1200);
+        }).catch(()=>{/* ignore */});
+      };
+    } else {
+      // проигрыш
+      resultImage.src = "https://via.placeholder.com/400x250.png?text=Не+в+этот+раз"; // замени если нужно
+      resultTitle.textContent = "Не в этот раз...";
+      resultSubtitle.textContent = "Попробуй снова";
+      winCodeContainer.style.display = 'none';
+      showResultModal();
+    }
+
+    // Сбрасываем lastPaymentIndex, чтобы надо было оплатить заново
+    lastPaymentIndex = null;
+  }
+
+  function showResultModal(){
+    resultModal.style.display = 'block';
+  }
+  function hideResultModal(){
+    resultModal.style.display = 'none';
+  }
+  closeResult.addEventListener('click', hideResultModal);
+
+  // Правила
+  openRulesBtn.addEventListener('click', () => { rulesModal.style.display = 'block'; });
+  closeRulesBtn.addEventListener('click', () => { rulesModal.style.display = 'none'; });
+
+  // копирование кода подсказка обработано в finalizeOpen
+
+  // Тестовый хак: если Telegram.WebApp не вызывает invoiceClosed автоматически (бросает в консоль), 
+  // можно симулировать оплату, например для тестирования в обычном браузере:
+  // window.simulatePay = (idx) => handleInvoiceClosed({status:"paid", forIndex: idx});
+
+  // ----------------- прочее: если пользователь кликает вне модалки — закрыть -----------------
+  window.addEventListener('click', function(e){
+    if(e.target === resultModal) hideResultModal();
+    if(e.target === rulesModal) rulesModal.style.display = 'none';
+  });
+
+  // Небольшая проверка: если пользователь запускает changeTab(2) несколько раз — initTab2 только один раз
+  // (реализация выше).
+
+  // ----------------- Дополнительно: если Telegram не доступен, предоставим простой способ теста -----------------
+  // (Можно вызвать window.simulatePay(индекс) в консоли для теста.)
+  window.simulatePay = (idx) => {
+    handleInvoiceClosed({status:"paid", forIndex: idx});
+  };
+
+  // (Доп) при загрузке: если вкладка 2 была активирована (например при прямой ссылке), инициализируем
+  if(document.getElementById('tab2').classList.contains('active')){
+    initTab2();
+  }
+</script>
+
 </body>
 </html>
-
