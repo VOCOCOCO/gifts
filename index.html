@@ -1,834 +1,1019 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Рулетка и вкладки</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Turbo Gifts — stickers, TON balance & Stars</title>
 
-  <!-- Подключаемые скрипты -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
-  <script src="https://unpkg.com/embla-carousel/embla-carousel.umd.js"></script>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- Telegram Web Apps SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Стили -->
-  <style>
-    body {
-      overflow-y: 1000;
-      margin: 0;
-      padding: 0;
-      background-color: #0d1117;
-      color: white;
-      font-family: Arial, sans-serif;
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
-    }
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #0d1117; }
-    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+<!-- lottie-web (.json) -->
+<script src="https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie.min.js"></script>
+<!-- rlottie (.tgs) -->
+<script src="https://cdn.jsdelivr.net/npm/rlottie@2.6.0/dist/rlottie.min.js"></script>
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<!-- TON Connect UI -->
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
-    #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #00bfff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #app { display: none; }
+<style>
+:root{
+  --bg:#0f1116;
+  --bg-soft:#151822;
+  --card-bg:#1a1e2a;
+  --text:#ffffff;
+  --muted:#c8cdd6;
+  --accent-blue-start:#3abefc;
+  --accent-blue-end:#6aa8ff;
+  --gold:#FFD14B;
+  --radius:18px;
+  --card-footer-h:56px; 
+  --tab-size:46px; 
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --ton:#27A6E5;
+}
 
-    .tab-container { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 7px; background-color: #222; border-top: 2px solid #444; z-index: 1000; }
-    .tab { width: 40px; height: 40px; margin: 0 15px; background-color: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; border-radius: 5px; }
-    .tab:hover { background-color: #555; }
-    .tab.active { background-color: #95cdff1e; transform: scale(1.01); }
-    .tab img { width: 100%; height: 100%; object-fit: contain; }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Inter, "SF Pro", Arial, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  line-height:1.35;
+}
 
-    .tab-content { display: none; padding-bottom: 80px; }
-    .tab-content.active { display: block; }
+.app{ max-width:560px; margin:0 auto; min-height:100vh; padding-bottom:calc(var(--tab-size) + 28px); }
 
-    /* Стили для первой вкладки (не трогать содержимое) */
-    .top-bar { position: fixed; top: 0; left: 0; width: 100%; background: #161b22; padding: 6px 15px; display: flex; align-items: center; z-index: 1000; border-bottom: 1px solid #2e2e2e; }
-    .top-bar img { width: 36px; height: 36px; border-radius: 50%; margin-right: 10px; }
-    .top-bar span { font-size: 16px; font-weight: bold; }
-    .container { padding: 69px 20px 20px; max-width: 600px; margin: 0 auto; box-sizing: border-box; }
-    .news-banner { width: 100%; height: 56px; background: linear-gradient(to right, #36bfff, #5e9fff); border-radius: 15.5px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-weight: 600; font-size: 16px; margin-bottom: 12px; box-sizing: border-box; }
-    .news-banner button { background: white; color: #5e9fff; border: none; padding: 8px 12px; border-radius: 12px; font-weight: 600; cursor: pointer; }
-    .mode-selector { display: flex; justify-content: center; background: #1c1c1e; border-radius: 16px; padding: 4px; margin-bottom: 12px; gap: 4px; }
-    .mode-option { flex: 1; padding: 8px 0; text-align: center; border-radius: 12px; color: white; font-weight: 650; font-size: 15px; transition: background-color 0.25s ease, color 0.25s ease; background: transparent; user-select: none; -webkit-tap-highlight-color: transparent; }
-    .mode-option.active { background: #2c2c2e; }
-    .reel { position: relative; width: 100%; height: 130px; overflow: hidden; border-radius: 12px; background: rgba(255,255,255,0.06); backdrop-filter: blur(6px); margin-bottom: 20px; }
-    .gifts-wrapper { display: flex; height: 100%; align-items: center; will-change: transform; }
-    .gift { width: 100px; height: 100px; background: rgba(255,255,255,0.08); border-radius: 15px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; margin: 0 10px; }
-    .gift img { max-width: 90px; max-height: 90px; }
-    .pointer-line { position: absolute; top: 0; left: 50%; width: 4px; height: 100%; background: rgba(0,200,255,0.5); transform: translateX(-50%); z-index: 10; }
-    button#spinButton { background-color: #2ea1f8; border: none; color: white; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 5px; }
-    .extra-button { display: block; width: 100%; padding: 11px 24px; background-color: transparent; color: white; font-size: 15px; font-weight: bold; text-align: center; text-decoration: none; border: 3px solid rgba(255, 255, 255, 0.7); border-radius: 9px; margin-top:5px; margin-bottom: 15px; box-sizing: border-box; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
-    .extra-button:hover { background-color: rgba(255, 255, 255, 0.05); border-color: white; }
+/* Topbar */
+.topbar{
+  position: sticky; top:0; z-index:40; padding:6px 12px;
+  background: linear-gradient(180deg, rgba(15,17,22,.98), rgba(15,17,22,.92) 70%, rgba(15,17,22,0));
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  backdrop-filter: blur(6px);
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.profile{ display:flex; align-items:center; gap:8px; min-width:0; }
+.avatar{ width:40px; height:40px; border-radius:50%; background:#222 center/cover; border:2px solid #303544; flex-shrink:0; }
+.name{ font-weight:700; font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-    .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.908); backdrop-filter: blur(45px); display: none; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; padding: 20px; box-sizing: border-box; }
-    .modal-image { max-width: 90%; max-height: 60%; object-fit: contain; margin-top: -20px; margin-bottom: 15px; }
-    .modal h2 { font-size: 24px; color: #00ffcc; margin: 0; text-align: center; }
-    .modal button { font-size: 16px; margin-top: 30px; padding: 10px 26px; width: 90%; }
+/* Wallet: connect pill -> balance pill */
+.wallet-wrap{ display:flex; align-items:center; gap:8px; position:relative; }
+.connect-btn{
+  display:inline-flex; align-items:center; gap:8px; border:0; cursor:pointer;
+  padding:10px 14px; border-radius:14px;
+  background:linear-gradient(90deg,var(--accent-blue-start),var(--accent-blue-end));
+  color:#fff; font-weight:900; box-shadow:0 8px 22px rgba(32,120,255,.25);
+}
+.connect-btn .addr{ max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-    .swipe-text { font-size: 17px; margin-bottom: 12px; padding-left: 10px; font-weight: bold; }
-    .embla { overflow: hidden; width: 100%; }
-    .embla__container { display: flex; }
-    .embla__slide { flex: 0 0 auto; width: 70px; height: 70px; margin-right: 10px; background: rgba(255,255,255,0.08); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    .embla__slide img { max-width: 60px; max-height: 60px; }
-    .footer-text { font-size: 12px; color: #888; text-align: center; margin: 5% 0 10px; }
+.balance-pill{
+  display:none; align-items:center; gap:8px; padding:8px 12px; border-radius:14px;
+  background:#101522; border:1px solid #2a3347; box-shadow:0 8px 22px rgba(0,0,0,.25);
+}
+.balance-pill.show{ display:inline-flex; }
+.ton-icon{ width:18px; height:18px; object-fit:contain; display:block; }
+.balance-val{ font-weight:900; letter-spacing:.2px; }
+.plus-btn{
+  width:26px; height:26px; display:grid; place-items:center; border-radius:10px; background:#2a3347; border:1px solid #39445b; cursor:pointer;
+  font-weight:900; font-size:18px; line-height:1; color:#dfe7ff;
+}
+.wallet-caret{ width:16px; height:16px; opacity:.85; cursor:pointer; transition:.2s; }
+.wallet-caret.rot{ transform: rotate(180deg); }
+.wallet-menu{
+  position:absolute; right:0; top:56px; z-index:55; display:none;
+  background:#121622; border:1px solid #252b3d; border-radius:12px; padding:8px; min-width:220px;
+  box-shadow:0 12px 32px rgba(0,0,0,.5); transform-origin: top right;
+}
+.wallet-menu.open{ display:block; }
+.wallet-menu .row{ display:flex; align-items:center; gap:8px; color:#94a5c7; font-size:12px; margin:px 0 6px; padding: 10px 12px; }
+.wallet-menu .hf{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#cfe0ff; }
+.wallet-menu button{ width:100%; background:transparent; border:0; color:#eaeefc; text-align:left; padding:10px 12px; border-radius:10px; font-weight:800; cursor:pointer; }
+.wallet-menu button:hover{ background:#1a2030; }
 
-    .extra-button.outlined { background-color: transparent; border: 2px solid white; color: white; font-weight: bold; text-align: center; font-size: 15px; padding: 10px 24px; border-radius: 8px; text-decoration: none; display: inline-block; width: 100%; margin-top: 5px; box-sizing: border-box; transition: all 0.2s ease; }
-    .extra-button.outlined:hover { background-color: rgba(255,255,255,0.05); border-color: #ffffff; }
+/* Banner */
+.banner{
+  margin:12px 14px; padding: 13px 12px; border-radius: 14px;
+  background: linear-gradient(90deg, var(--accent-blue-start), var(--accent-blue-end));
+  display:flex; align-items:center; justify-content:space-between;
+  box-shadow: var(--shadow);
+}
+.banner .title{ font-weight:800; font-size:15px; margin:0px 8px; }
+.banner .btn{
+  background: #fff; color: #09b5ff; font-weight:700; padding:6px 10px;
+  border-radius:12px; text-decoration:none; font-size:13px; display:inline-flex; align-items:center; gap:8px;
+}
 
-    /* ========== Стили для вкладки 2 (новые) ========== */
-    .tab2-wrapper {
-      padding: 60px 20px 120px;
-      max-width: 700px;
-      margin: 0 auto;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 18px;
-    }
+/* Toggle */
+.toggle{
+  margin: 10px 14px 0; padding: 12px 14px; background: var(--bg-soft);
+  border:1px solid #222838; border-radius: 16px; display:flex; align-items:center; gap:12px;
+}
+.toggle input{ appearance:none; width:22px;height:22px;border-radius:6px; border:2px solid #556079; display:grid; place-items:center; background:#0f1116; }
+.toggle input:checked{ background:#1f283b; border-color:#6aa8ff; }
+.toggle input:checked::after{ content:"✓"; color:#a8c9ff; font-size:14px; line-height:1; }
+.toggle label{ color: var(--text); font-weight:600; user-select:none; }
 
-    .rules-btn {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 1100;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 13px;
-    }
+/* Grid (market) */
+.grid{
+  display:grid; grid-template-columns: repeat(2, 1fr);
+  gap:14px; padding:14px; justify-items:center; align-items:start;
+}
+.card{
+  position:relative; overflow:hidden; border-radius:16px;
+  background: radial-gradient(120% 120% at 0% 0%, #20263a 0%, #1a1f2d 40%, #161b28 100%);
+  border:1px solid #262c41; width:100%; max-width: 260px; height: 260px; 
+  display:flex; flex-direction:column; justify-content:flex-end;
+  box-shadow: var(--shadow); transition: transform .12s ease; cursor:pointer;
+}
+@media (max-width:420px){ .card{ height: 200px; } }
+.card:active{ transform: translateY(1px); }
+.card .media{ position: absolute; left:0; right:0; top:0; height: calc(100% - var(--card-footer-h)); display:flex; align-items:center; justify-content:center; padding: 14px; }
+.media canvas, .media svg, .media img, .media div{ max-width:100%; max-height:100%; }
+.card .footer{ height: var(--card-footer-h); display:flex; align-items:center; justify-content:center; position:relative; padding:10px 14px; background:linear-gradient(180deg, rgba(11,13,18,.35), rgba(11,13,18,.55)); border-top:1px solid rgba(255,255,255,.03); backdrop-filter: blur(4px); }
+.card .footer .price{ display:inline-flex; align-items:center; gap:8px; background:linear-gradient(180deg, rgba(255, 210, 75, 0.140), rgba(255, 195, 45, 0.140)); padding:6px 13px; border-radius:16px; color:#51ff00d2; font-weight:700; font-size:15px; box-shadow: 0 6px 16px rgba(0,0,0,.22); }
+.price-icon { width:16px; height:16px; object-fit:contain; border-radius:3px; }
+.ribbon { position:absolute; top:10px; right:-22px; width:120px; height:26px; display:flex; align-items:center; justify-content:center; transform: rotate(35deg); transform-origin:center; background:linear-gradient(90deg,#66c2ff,#3aa6ff); color:#fff; font-weight:700; font-size:12px; border-radius:6px; box-shadow:0 4px 8px rgba(0,0,0,0.25); pointer-events:none; line-height:1; padding:0 8px; white-space:nowrap; }
 
-    .lotto-grid {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      justify-items: center;
-      align-items: center;
-    }
+/* Tabbar */
+.tabbar{ position: fixed; left:0; right:0; bottom:0; z-index:60; display:flex; justify-content:center; align-items:center; padding:8px 10px; background: linear-gradient(0deg, rgba(15,17,22,1), rgba(15,17,22,.96)); border-top:1px solid rgba(255,255,255,.03); }
+.tabs{ width:min(560px, 100%); display:flex; gap:12px; justify-content:center; }
+.tab{ width: var(--tab-size); height: var(--tab-size); border-radius:12px; background:#111523; border:1px solid #252b3d; display:grid; place-items:center; cursor:pointer; box-shadow: 0 8px 18px rgba(0,0,0,.25); transition: transform .12s, opacity .2s; overflow:hidden; }
+.tab img{ width:20px; height:20px; object-fit:contain; pointer-events:none; display:block }
+.tab.active{ outline:2px solid #3f69ff55; transform: translateY(-2px); }
+.tab.disabled{ opacity:.4; pointer-events:none; }
 
-    /* каждый кубик */
-    .cube {
-      width: 160px;
-      height: 160px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: visible;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-      touch-action: none; /* для правильной работы удержания на мобильных */
-      user-select: none;
-    }
-    .cube .lottie-holder {
-      width: 120px;
-      height: 120px;
-      pointer-events: none; /* чтобы нажатие шло на cube при проигрывании lottie */
-    }
-    .cube .hold-hint {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 12px;
-      color: #aaa;
-    }
-    .hold-overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: 14px;
-      pointer-events: none;
-      box-shadow: inset 0 0 0 2px transparent;
-      transition: box-shadow 0.12s linear;
-    }
+/* Fullscreen item modal */
+.overlay{ position: fixed; inset:0; z-index:2000; display:none; align-items: center; justify-content: center; background: rgba(6,8,10,0.95); backdrop-filter: blur(6px); }
+.overlay.open{ display:flex; }
+.modal-card{ width:100%; height:100%; max-height:100vh; background: linear-gradient(180deg,#0f1116,#0b0d10); border-radius:0; display:flex; flex-direction:column; overflow:hidden; padding-bottom:16px; }
+.modal-top{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.03); }
+.modal-title { font-weight:800; font-size:20px; }
+.modal-close { background:transparent; border:0; color:var(--muted); font-weight:700; cursor:pointer; font-size:16px; }
+.modal-body{ flex:1; display:flex; align-items:center; justify-content:center; padding: 8px; overflow:auto; }
+.modal-media-wrap{ width:80%; max-width:520px; aspect-ratio: 1 / 1; display:flex; align-items:center; justify-content:center; border-radius:14px; background: linear-gradient(180deg, rgba(20,22,28,0.45), rgba(8,9,12,0.35)); border:1px solid rgba(255,255,255,0.03); box-shadow: 0 20px 60px rgba(0,0,0,.6); overflow:hidden; }
+.modal-media{ width:80%; height:80%; display:flex; align-items:center; justify-content:center; padding:8px; }
+.modal-bottom{ padding:18px 16px; display:flex; flex-direction:column; gap:10px; }
+.price-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.price-pill{ display:inline-flex; align-items:center; gap:10px; background:linear-gradient(180deg, rgba(255, 210, 75, 0.140), rgba(255, 195, 45, 0.140)); color:#51ff00d2; padding:10px 14px; border-radius:16px; font-weight:650; font-size:17px; box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+.btn-ghost{ background: rgba(255,255,255,0.06); color:#fff; padding:14px; border-radius:12px; text-align:center; border:1px solid rgba(255,255,255,0.03); font-weight:800; text-decoration:none; }
+.btn-primary{ background: linear-gradient(90deg,#2fa6ff,#1a73ff); color:#fff; padding:16px; border-radius:12px; text-align:center; font-weight:900; text-decoration:none; }
+.modal-actions {
+  display:flex;
+  gap:12px;
+  flex-direction:column; /* ← ВОТ ЭТО ДОЛЖНО БЫТЬ */
+}
 
-    .hold-progress {
-      position: absolute;
-      left: 0; right: 0; bottom: 0;
-      height: 6px;
-      background: rgba(255,255,255,0.06);
-      border-bottom-left-radius: 12px;
-      border-bottom-right-radius: 12px;
-      overflow: hidden;
-    }
-    .hold-progress > .bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(to right, #00f, #0ff);
-      transition: width 0.05s linear;
-    }
 
-    /* Canvas particles */
-    .particles-canvas {
-      position: absolute;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 20;
-    }
+.modal-actions a {
+  flex: 1;                  /* ✅ чтобы кнопки были одинаковой ширины */
+  text-align: center;
+}
 
-    /* маленькие модальные окна результата */
-    .mini-modal {
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 320px;
-      max-width: calc(100% - 40px);
-      background: #0f1720;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-      padding: 14px;
-      display: none;
-      z-index: 1200;
-      text-align: center;
-    }
-    .mini-modal img { width: 140px; height: auto; margin: 8px auto; display: block; border-radius: 10px; }
-    .mini-modal .title { font-size: 18px; color: #fff; margin-top: 6px; font-weight: 700; }
-    .mini-modal .subtitle { font-size: 13px; color: #b9c2c9; margin-top: 6px; }
-    .mini-modal .code-btn {
-      margin-top: 12px;
-      display: inline-block;
-      background: #0ea5a4;
-      color: #04111a;
-      font-weight: 800;
-      padding: 8px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      user-select: all;
-    }
-    .mini-modal .copy-small { display:block; font-size: 11px; color: #9aa3a9; margin-top: 6px; }
 
-    @media (max-width: 520px) {
-      .lotto-grid { grid-template-columns: repeat(2, 1fr); }
-      .cube { width: 140px; height: 140px; }
-    }
-  </style>
+/* Pay toggle (only in modal) */
+.payton-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* ✅ растягиваем по сторонам */
+  width: 100%;                     /* ✅ одна строка */
+  margin-top: 4px;
+  gap: 12px;
+}
+
+.payton-label{ color:#9aa3b2; font-weight:700; }
+.switch{ position:relative; width:52px; height:30px; border-radius:999px; background:#233045; border:1px solid #34415a; cursor:pointer; transition:.25s; }
+.switch::after{ content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:.25s; }
+.switch.on{ background:#34C759; border-color:#2aa34a; }
+.switch.on::after{ left:25px; }
+.wallet-overlay{ position:fixed; inset:0; z-index:3000; display:none; align-items:flex-end; justify-content:center; background:rgba(8,10,12,.6); backdrop-filter:blur(4px); }
+.wallet-overlay.open{ display:flex; }
+.wallet-modal{ width:100%; max-width:560px; background:linear-gradient(180deg,#0e1219,#0b0f16); border-top-left-radius:18px; border-top-right-radius:18px; border:1px solid #232a3b; padding:14px 14px 18px; box-shadow: 0 -16px 40px rgba(0,0,0,.45); }
+.wallet-header{ display:flex; align-items:center; justify-content:space-between; padding:6px 4px 10px; }
+.wallet-title{ font-weight:900; font-size:20px; }
+.wallet-close{ background:transparent; border:0; color:#b8c2d9; font-size:22px; cursor:pointer; }
+.wallet-tabs{ display:flex; gap:8px; padding:6px 2px 12px; }
+.wallet-tab{ flex:1; text-align:center; padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:800; background:#141a26; border:1px solid #242c3e; color:#cfe0ff; transition:.25s; }
+.wallet-tab.active{ background:linear-gradient(90deg,#2fa6ff,#1a73ff); color:#fff; border-color:transparent; }
+.tab-panel{ display:none; }
+.tab-panel.active{ display:block; }
+.form-row{ display:flex; flex-direction:column; gap:6px; padding:8px 2px; }
+.input-ton{ width:100%; padding:14px 14px; border-radius:12px; border:1px solid #273149; outline:none; background:#0f1420; color:#fff; font-weight:800; font-size:18px; }
+.primary-btn{ width:100%; margin-top:8px; padding:14px; border-radius:12px; border:0; cursor:pointer; font-weight:900; color:#fff; background:linear-gradient(90deg,#2fa6ff,#1a73ff); }
+.small{ font-size:12px; color:#93a2bf; }
+.hf-address{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#cfe0ff; letter-spacing:.2px; }
+
+/* Purchased (inventory) */
+.tab3-wrapper {
+  padding:16px;
+  display:none;
+  flex-direction:column;
+  gap:12px;
+  width: 100%;          /* ✅ растягиваем */
+  max-width: 560px;     /* ✅ как весь app */
+  margin: 0 auto;       /* ✅ центрируем нормально */
+}
+
+.tab3-wrapper.open{ display:flex; }
+.tab3-profile{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:6px; }
+.big-avatar{ width:84px; height:84px; border-radius:50%; background:#222 center/cover; border:3px solid #303544; }
+.profile-name{ font-weight:800; font-size:18px; }
+.separator{ width:90%; height:1px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); margin: 4px 0 8px 0; border-radius:2px; }
+
+/* === INVENTORY (exact copy of market cards) === */
+.purchased-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding: 14px;
+  justify-items: center;
+  align-items: start;
+  max-height: calc(100vh - 260px); /* скролл, когда много */
+  overflow-y: auto;
+}
+
+.purchased-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: radial-gradient(120% 120% at 0% 0%, #20263a 0%, #1a1f2d 40%, #161b28 100%);
+  border: 1px solid #262c41;
+  width: 100%;
+  max-width: 260px;      /* как в маркете */
+  aspect-ratio: 1 / 1;   /* квадрат 1:1 всегда */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform .12s ease;
+}
+.purchased-card:active{ transform: translateY(1px); }
+
+.purchased-card .media {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+.purchased-card img,
+.purchased-card canvas,
+.purchased-card svg,
+.purchased-card div {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* убираем цену в инвентаре */
+.purchased-card .footer { display: none !important; }
+
+/* Лента OWNED */
+.purchased-card .ribbon {
+  position: absolute;
+  top: 10px;
+  right: -22px;
+  width: 120px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(35deg);
+  transform-origin: center;
+  background: linear-gradient(90deg,#66c2ff,#3aa6ff);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.hidden{ display:none !important; }
+.lottie-placeholder{ color:var(--muted); font-size:13px; text-align:center; padding:8px }
+
+/* Toast */
+.toast{
+  position:fixed; left:50%; top:10px; transform:translateX(-50%) translateY(-20px);
+  width:min(560px, calc(100% - 24px));
+  background:#101624; border:1px solid #2a3550; color:#eaf1ff;
+  padding:12px 14px; border-radius:14px; z-index:4000; display:flex; align-items:center; gap:10px;
+  opacity:0; pointer-events:none; box-shadow:0 16px 38px rgba(0,0,0,.45);
+}
+.toast img{ width:16px; height:16px; object-fit:contain; display:block; }
+.toast.show{ pointer-events:auto; }
+
+/* ===== History (TON style) ===== */
+.history-list {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #2a3245 #0f1116;
+}
+
+.history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: #0f1116;
+  border-radius: 4px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background-color: #2a3245;
+  border-radius: 4px;
+}
+
+.history-date { font-size:13px; font-weight:700; color:#9aa3b2; text-transform:uppercase; letter-spacing:.6px; margin-left:2px; }
+.history-item { background:#121722; border:1px solid #1f2633; border-radius:14px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; }
+.history-left { display:flex; flex-direction:column; gap:4px; }
+.history-title { font-weight:700; font-size:15px; color:white; }
+.history-time { font-size:12px; color:#8b93a7; }
+.history-amount { font-weight:800; font-size:15px; }
+.plus { color:#4cd964; }
+.minus { color:#ff3b30; }
+</style>
 </head>
 <body>
-  <div id="loader">
-    <div class="spinner"></div>
+  <div class="app" id="mainApp">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="profile">
+        <div id="avatar" class="avatar" aria-hidden="true"></div>
+        <div id="userName" class="name">User</div>
+      </div>
+
+      <!-- Wallet area -->
+      <div class="wallet-wrap">
+        <!-- Connect -->
+        <button id="connectBtn" class="connect-btn" aria-label="Connect TON">
+          <span class="addr">Connect TON</span>
+        </button>
+
+        <!-- Internal mini-app balance -->
+        <div id="balancePill" class="balance-pill" title="Balance">
+          <img id="tonIcon" class="ton-icon" src="ton.svg" alt="TON">
+          <span id="balanceValue" class="balance-val">0.00</span>
+          <div id="plusBtn" class="plus-btn" role="button" aria-label="Deposit">+</div>
+          <svg id="walletCaret" class="wallet-caret" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div id="walletMenu" class="wallet-menu" role="menu" aria-hidden="true">
+            <div class="row">Connected:&nbsp;<span id="hfAddr" class="hf"></span></div>
+            <button id="disconnectBtn">Disconnect TON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner -->
+    <div class="banner" role="region" aria-label="banner">
+      <div class="title">Check our news!</div>
+      <a id="bannerBtn" class="btn" href="https://t.me/voco_in" target="_blank" rel="noopener">Open Voco</a>
+    </div>
+
+    <!-- Toggle -->
+    <div class="toggle" role="group" aria-label="Фильтр">
+      <input id="hideSold" type="checkbox" />
+      <label for="hideSold">Hide sold gifts</label>
+    </div>
+
+    <!-- Grid (market) -->
+    <div class="grid" id="cardsGrid" aria-live="polite">
+      <article class="card" id="card1" data-sold="false" data-invoice-url="https://t.me/$MT7XilTzEUhVFQAA6GiCpOiKmf8" role="article" aria-label="Voco Coin">
+        <div class="ribbon" aria-hidden="true">1 of 250</div>
+        <div class="media lottie" data-lottie-url="https://raw.githubusercontent.com/vovashmyhol/shop/refs/heads/main/sticker.json">
+          <div class="lottie-placeholder">Lottie 1</div>
+        </div>
+        <div class="footer">
+          <div class="price">
+            <img src="stars-DBKMczxe.png" alt="icon" class="price-icon">
+            <span class="price-value">15</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" id="card2" data-sold="false" data-invoice-url="https://t.me/$OEtEnkq5wEppDQAAuOeA4xzWyR4" role="article" aria-label="Exclusive reward">
+        <div class="ribbon" aria-hidden="true">1 of 110</div>
+        <div class="media lottie" data-lottie-url="https://raw.githubusercontent.com/VOCOCOCO/gifts/refs/heads/main/sticker%20(5).json">
+          <div class="lottie-placeholder">Lottie 2</div>
+        </div>
+        <div class="footer">
+          <div class="price">
+            <img src="stars-DBKMczxe.png" alt="icon" class="price-icon">
+            <span class="price-value">35</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" id="cardX" data-sold="false" data-invoice-url="https://t.me/$invoice_example" role="article" aria-label="Voco Pepe">
+  <div class="ribbon" aria-hidden="true">1 из 50</div>
+  <div class="media lottie" data-lottie-url="https://raw.githubusercontent.com/VOCOCOCO/gifts/refs/heads/main/sticker%20(2).json">
+    <div class="lottie-placeholder">Lottie 3</div>
+  </div>
+  <div class="footer">
+    <div class="price">
+      <img src="stars-DBKMczxe.png" alt="icon" class="price-icon">
+      <span class="price-value">150</span>
+    </div>
+  </div>
+</article>
+
+    </div>
   </div>
 
-  <div id="app">
-    <!-- Вкладка 1 — Рулетка -->
-<div class="tab-content active" id="tab1">
-  <div class="top-bar">
-    <img id="profilePic" src="" alt="Profile Picture">
-    <span id="profileName">User</span>
+  <!-- Tabbar -->
+  <nav class="tabbar" role="navigation" aria-label="Основная навигация">
+    <div class="tabs" role="tablist">
+      <div class="tab active" role="tab" aria-selected="true" id="tab1" title="Маркет">
+        <img src="магазин.png" alt="tab1 icon">
+      </div>
+      <div class="tab disabled" role="tab" aria-selected="false" id="tab2" title="Неактивно">
+        <img src="ok.png" alt="tab2 icon">
+      </div>
+      <div class="tab" role="tab" aria-selected="false" id="tab3" title="Инвентарь">
+        <img src="инвентарь.png" alt="tab3 icon">
+      </div>
+    </div>
+  </nav>
+
+  <!-- Tab 3 content (Inventory) -->
+  <div id="tab3Content" class="tab3-wrapper" aria-hidden="true">
+    <div class="tab3-profile">
+      <div id="bigAvatar" class="big-avatar" aria-hidden="true"></div>
+      <div id="bigName" class="profile-name">User</div>
+    </div>
+    <div class="separator" aria-hidden="true"></div>
+    <div id="purchasedGrid" class="purchased-grid" aria-live="polite"></div>
   </div>
 
-  <div class="container">
-    <div class="news-banner">
-      <span>Turbo Gifts here!</span>
-      <button onclick="window.location.href='https://t.me/AutoGiftysBot'">Open Gifts</button>
-    </div>
+  <!-- ITEM MODAL -->
+  <div id="itemOverlay" class="overlay" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-card" role="document" aria-label="Detalis">
+      <div class="modal-top">
+        <div class="modal-title" id="modalTitle">Gift</div>
+        <button id="modalCloseBtn" class="modal-close" aria-label="Закрыть">✕</button>
+      </div>
 
-    <div class="mode-selector">
-      <div class="mode-option active" data-price="35" data-link="https://t.me/$zLCg1Xa26UlZDQAA5UvFqNpOjqo">35★</div>
-      <div class="mode-option" data-price="50" data-link="https://t.me/$6k1Z8Ha26UlaDQAAVovivYcjdqU">50★</div>
-      <div class="mode-option" data-price="150" data-link="https://t.me/$SR_sP3a26UlbDQAAvm5lKSwJrGg">150★</div>
-    </div>
+      <div class="modal-body">
+        <div class="modal-media-wrap">
+          <div id="modalLottie" class="modal-media"></div>
+        </div>
+      </div>
 
-    <div class="reel" id="reel">
-      <div class="pointer-line"></div>
-      <div class="gifts-wrapper" id="giftsTrack"></div>
-    </div>
+      <div class="modal-bottom">
+        <div class="price-row">
+          <div class="price-pill" id="modalPricePill">
+            <img src="stars-DBKMczxe.png" alt="icon" style="width:18px;height:18px;object-fit:contain">
+            <div id="modalPriceValue">15</div>
+          </div>
+          <div style="color:#9aa3b2;font-weight:600;margin-left:8px" id="modalShort"></div>
+        </div>
 
-    <button id="spinButton">Try your luck 35★</button>
-    <a href="https://t.me/StarsotekaRobot?start=d846ae70" class="extra-button outlined">Купить 50★ за 79₽</a>
-    <div class="swipe-roulette-container">
-      <div class="swipe-text">What can I drop?</div>
-      <div class="embla" id="embla">
-        <div class="embla__container" id="emblaTrack"></div>
+        <!-- переключатель оплаты (ТОЛЬКО в модалке рынка) -->
+        <div id="payRow" class="payton-row">
+          <div class="payton-label">Оплата в TON</div>
+          <div id="payTonSwitch" class="switch" role="switch" aria-checked="false"></div>
+        </div>
+
+        <div class="modal-actions">
+          <a id="modalBuyStars" class="btn-ghost" href="#" target="_blank" rel="noopener">Buy stars ★</a>
+          <a id="modalBuyGift" class="btn-primary" href="#" target="_blank" rel="noopener">Buy gift — ★ <span id="modalBuyPrice">15</span></a>
+          <!-- Для инвентаря: на месте кнопки покупки будет disabled Mint -->
+          <a id="mintBtn" class="btn-primary hidden" style="opacity:.5;pointer-events:none;">Mint (soon)</a>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="modal" id="modal">
-    <img id="modalImage" class="modal-image" src="nothing_drop.png" alt="Prize image" style="display: none;">
-    <div class="modal-animation" id="modalLottie"></div>
-    <h2>Try your luck next time 🍀</h2>
-    <button id="closeModal">Закрыть</button>
-  </div>
-
-  <footer class="footer-text">© 2025 All rights reserved</footer>
-</div>
-
-<!-- Вкладка 2 — НОВАЯ (не трогай таб1 содержимое) -->
-<div class="tab-content" id="tab2">
-  <button class="rules-btn" id="openRules">Правила</button>
-
-  <div class="tab2-wrapper">
-    <h2 style="margin:0 0 6px; font-size:20px; font-weight:700; text-align:center;">Кубики удачи</h2>
-    <div style="color:#bfc9cf; font-size:14px; text-align:center; margin-bottom:6px;">Нажми -> оплата -> удерживай 2.5с, чтобы открыть кубик</div>
-
-    <div class="lotto-grid" id="lottoGrid">
-      <!-- Кубики будут сгенерированы скриптом -->
-    </div>
-  </div>
-
-  <!-- канва для частиц (одна на всю вкладку, рисуем в координатах кубика во время удержания) -->
-  <canvas id="particlesCanvas" class="particles-canvas"></canvas>
-
-  <!-- Результирующее маленькое модальное окно (не полноэкранное) -->
-  <div id="resultModal" class="mini-modal">
-    <img id="resultImage" src="" alt="result" />
-    <div class="title" id="resultTitle">Не в этот раз...</div>
-    <div class="subtitle" id="resultSubtitle">Попробуй снова</div>
-    <div style="margin-top:8px;">
-      <div id="winCodeContainer" style="display:none;">
-        <div class="code-btn" id="winCode">12345</div>
-        <div class="copy-small" id="copyHint">Нажмите чтобы скопировать и отправьте данный код @vovnx для получения подарка</div>
+  <!-- Wallet sheet -->
+  <div id="walletOverlay" class="wallet-overlay" aria-hidden="true">
+    <div class="wallet-modal" role="dialog" aria-modal="true">
+      <div class="wallet-header">
+        <div class="wallet-title">Кошелёк</div>
+        <button id="walletClose" class="wallet-close" aria-label="Закрыть">×</button>
       </div>
-      <button id="closeResult" style="margin-top:10px; padding:8px 12px; border-radius:8px;">Закрыть</button>
+
+      <div class="wallet-tabs">
+        <div id="tabDeposit"  class="wallet-tab active">Пополнить</div>
+        <div id="tabHistory"  class="wallet-tab">История</div>
+      </div>
+
+      <div id="panelDeposit" class="tab-panel active">
+        <div class="small">Подключён: <span id="connectedShort" class="hf-address">—</span></div>
+        <div class="form-row">
+          <input id="amountInput" class="input-ton" type="number" step="0.01" min="0" placeholder="Сумма в TON" />
+          <button id="depositBtn" class="primary-btn">Пополнить</button>
+          <div class="small">После подтверждения в Tonkeeper средства зачислятся на баланс.</div>
+        </div>
+      </div>
+
+      <div id="panelHistory" class="tab-panel">
+        <div id="historyList" class="history-list"></div>
+      </div>
     </div>
   </div>
 
-  <!-- Правила маленькое модальное -->
-  <div id="rulesModal" class="mini-modal" style="width:300px;">
-    <div style="font-weight:800; font-size:16px; margin-bottom:8px;">Правила</div>
-    <div style="color:#bfc9cf; font-size:13px; text-align:left;">1) Нажми на кубик. 2) Откроется окно оплаты. 3) После успешной оплаты удерживай 2.5 секунды. 4) Возможен выигрыш с шансом 30%.</div>
-    <button id="closeRulesBtn" style="margin-top:12px; padding:8px 12px; border-radius:8px;">Закрыть</button>
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <img id="toastIcon" alt="ton">
+    <span id="toastText">Баланс пополнен</span>
   </div>
-</div>
-
-<!-- Переключатель вкладок -->
-<div class="tab-container">
-  <div class="tab" onclick="changeTab(1)">
-    <img src="3664550.png" alt="Tab 1" />
-  </div>
-  <div class="tab" onclick="changeTab(2)">
-    <img src="Монета.png" alt="Tab 2" />
-  </div>
-</div>
-  </div>
-
-<!-- Скрипты -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-<script src="https://unpkg.com/embla-carousel/embla-carousel.umd.js"></script>
 
 <script>
-  // ------------------ профиль (оставлено без изменений) ------------------
-  function updateProfile() {
-    if (window.Telegram && Telegram.WebApp) {
-      const user = Telegram.WebApp.initDataUnsafe?.user;
-      if (user) {
-        document.getElementById("profileName").textContent = user.first_name || "User";
-        if (user.photo_url) {
-          document.getElementById("profilePic").src = user.photo_url;
-        }
-      }
-    }
+/* ========= SETTINGS ========= */
+const MERCHANT_ADDRESS = 'UQDyKNQLN_PqZgd_NXnVe80cezX9M5mCL0izNW3w2iQAXkp0'; // твой кошелёк-получатель
+const TONCENTER_API    = 'https://toncenter.com/api/v2';
+const TONCENTER_KEY    = '4450d174a1faa93de6c3acbc449cb55e7b60d2c83799111ae9e55ac9ad082152';
+const MANIFEST_URL     = 'https://vocococo.github.io/ton-connect/tonconnect-manifest.json';
+const APP_BALANCE_KEY  = 'tgifts_balance_v1';
+const APP_HISTORY_KEY  = 'tgifts_history_v1';
+
+/* Курс: 100★ = 0.66 TON => 1★ = 0.0066 TON */
+const STAR_TO_TON = 0.0066;
+
+/* ========= UTIL ========= */
+const $ = s => document.querySelector(s);
+function truncate(a){ return a ? a.slice(0,4)+'…'+a.slice(-4) : ''; }
+function fromNano(n){ const v = Number(n)/1e9; return (v<1? v.toFixed(4): v.toFixed(2)); }
+function toNano(t){ return Math.round(Number(t)*1e9).toString(); }
+function animateOpen(el){ if(typeof gsap!=='undefined' && el){ gsap.fromTo(el,{opacity:0,y:12},{opacity:1,y:0,duration:.28,ease:'power2.out'});} }
+function animateClose(el, cb){ if(typeof gsap!=='undefined' && el){ gsap.to(el,{opacity:0,y:12,duration:.2,ease:'power2.in',onComplete:cb}); } else { cb&&cb(); } }
+
+/* ========= TOAST ========= */
+const toast = $('#toast'), toastIcon = $('#toastIcon'), toastText = $('#toastText');
+function showToast(text){
+  const iconSrc = $('#tonIcon')?.src || '';
+  toastIcon.src = iconSrc;
+  toastText.textContent = text;
+  if(typeof gsap!=='undefined'){
+    gsap.killTweensOf(toast);
+    gsap.set(toast,{y:-20,opacity:0});
+    toast.classList.add('show');
+    gsap.to(toast,{y:0,opacity:1,duration:.28,ease:'power2.out'});
+    gsap.to(toast,{y:-20,opacity:0,delay:1.5,duration:.25,ease:'power2.in',onComplete:()=>toast.classList.remove('show')});
+  } else {
+    toast.style.opacity=1; setTimeout(()=> toast.style.opacity=0, 1500);
   }
+}
 
-  // ------------------ вкладки ------------------
-  function changeTab(tabNumber) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.getElementById('tab' + tabNumber).classList.add('active');
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab')[tabNumber - 1].classList.add('active');
-
-    // если открыли вкладку 2 — инициализируем (если нужно)
-    if (tabNumber === 2) {
-      initTab2();
-    }
+const tonUI = new TON_CONNECT_UI.TonConnectUI({
+  manifestUrl: MANIFEST_URL,
+  actionsConfiguration: {
+    twaReturnUrl: 'https://t.me'
   }
+});
 
-  // ------------------ Подарки / рулетка — оставлено как было ------------------
-  const gifts = [
-    "1CHzB4K5FantEZu.png", "680e5d8f8bf66.png", "toTNAm2yurDAiqK.png", "U8z9ivaScNyJ86V.png",
-    "Oj0IhQW5D5QyVFf.png", "PQM9MVSTAF7sQ12.png", "nothing_drop.png",
-    "pudbsohqxfD98gc.png", "bvK9PmcyFgAh4gP.png", "q2c0eUx5k8krA97.png"
-  ];
+/* ========= INTERNAL BALANCE + HISTORY ========= */
+function readBalance(){ return Number(localStorage.getItem(APP_BALANCE_KEY) || '0'); }
+function writeBalance(v){ localStorage.setItem(APP_BALANCE_KEY, String(v)); renderBalancePill(); }
+function addHistory(rec){ const list = JSON.parse(localStorage.getItem(APP_HISTORY_KEY)||'[]'); list.unshift(rec); localStorage.setItem(APP_HISTORY_KEY, JSON.stringify(list)); renderHistory(); }
+function readHistory(){ try{return JSON.parse(localStorage.getItem(APP_HISTORY_KEY)||'[]');}catch(e){return [];} }
 
-  const fullGifts = [];
-  for (let i = 0; i < 10; i++) fullGifts.push(...gifts);
+/* ========= WALLET TOP RIGHT ========= */
+const connectBtn   = $('#connectBtn');
+const balancePill  = $('#balancePill');
+const balanceValue = $('#balanceValue');
+const plusBtn      = $('#plusBtn');
+const walletCaret  = $('#walletCaret');
+const walletMenu   = $('#walletMenu');
+const disconnectBtn= $('#disconnectBtn');
+const hfAddrSpan   = $('#hfAddr');
 
-  const giftsTrack = document.getElementById("giftsTrack");
-  fullGifts.forEach(g => {
-    const div = document.createElement("div");
-    div.className = "gift";
-    const img = document.createElement("img");
-    img.src = g;
-    div.appendChild(img);
-    giftsTrack.appendChild(div);
-  });
+async function renderBalancePill(){
+  const bal = readBalance();
+  balanceValue.textContent = (bal<1 ? bal.toFixed(4) : bal.toFixed(2));
+  const addr = tonUI.account?.address;
+  if(addr){
+    connectBtn.style.display='none';
+    balancePill.classList.add('show');
+    hfAddrSpan.textContent = truncate(addr);
+  } else {
+    balancePill.classList.remove('show');
+    connectBtn.style.display='inline-flex';
+  }
+}
+renderBalancePill();
 
-  // --- Модальное изображение ---
-  const modalImage = document.getElementById("modalImage");
-  modalImage.src = "nothing_drop.png";
-  modalImage.style.display = "block";
+connectBtn.addEventListener('click', async ()=>{ try{ await tonUI.openModal(); }catch{} });
+tonUI.onStatusChange(()=>{ renderBalancePill(); });
 
-  // --- Режимы ---
-  const spinButton = document.getElementById("spinButton");
-  const options = document.querySelectorAll('.mode-option');
-  let selectedLink = "https://t.me/$OEtEnkq5wEppDQAAuOeA4xzWyR4";
-
-  options.forEach(option => {
-    option.addEventListener('click', () => {
-      options.forEach(o => o.classList.remove('active'));
-      option.classList.add('active');
-      const price = option.getAttribute('data-price');
-      selectedLink = option.getAttribute('data-link');
-      spinButton.textContent = `Try your luck ${price}★`;
+/* Wallet dropdown with animation */
+walletCaret.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  if(walletMenu.classList.contains('open')){
+    walletCaret.classList.remove('rot');
+    animateClose(walletMenu, ()=>{
+      walletMenu.classList.remove('open');
+      walletMenu.setAttribute('aria-hidden','true');
+      walletMenu.style.opacity = '';
+      walletMenu.style.transform = '';
     });
-  });
-
-  // --- Кнопка запуска рулетки ---
-  let spinning = false;
-  spinButton.onclick = () => {
-    if (spinning) return;
-    Telegram.WebApp.openInvoice(selectedLink);
-  };
-
-  // --- После оплаты (для вкладки 1) ---
-  Telegram.WebApp.onEvent("invoiceClosed", function(event) {
-    if (event.status === "paid") {
-      // поведение вкладки1 — как было
-      spinning = true;
-      const prize = "nothing_drop.png";
-      const idx = fullGifts.findIndex((v, i) => v === prize) + 5 * gifts.length;
-      const offset = idx * 120 - (document.getElementById("reel").offsetWidth / 2 - 60);
-      gsap.to(giftsTrack, {
-        x: -offset,
-        duration: 6,
-        ease: "power5.inOut",
-        onComplete() {
-          document.getElementById("modal").style.display = "flex";
-          document.getElementById("modalLottie").innerHTML = "";
-          lottie.loadAnimation({
-            container: document.getElementById("modalLottie"),
-            renderer: "svg",
-            loop: true,
-            autoplay: true,
-            path: "https://lottie.host/2e7b308e-92b6-495c-a96b-cf93e02eb7b4/BiwZQ7vQaf.json"
-          });
-        }
-      });
-    }
-  });
-
-  document.getElementById("closeModal").onclick = () => {
-    document.getElementById("modal").style.display = "none";
-    gsap.set(giftsTrack, { x: 0 });
-    spinning = false;
-  };
-
-  // Embla
-  const emblaTrack = document.getElementById("emblaTrack");
-  gifts.forEach(g => {
-    const slide = document.createElement("div");
-    slide.className = "embla__slide";
-    const img = document.createElement("img");
-    img.src = g;
-    slide.appendChild(img);
-    emblaTrack.appendChild(slide);
-  });
-
-  EmblaCarousel(document.getElementById("embla"), {
-    loop: false,
-    align: "start",
-    dragFree: true
-  });
-
-  // --- Лоадер ---
-  window.addEventListener('load', function () {
-    const MIN_LOADING_TIME = 1500;
-    const startTime = Date.now();
-
-    const checkReady = () => {
-      if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) {
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
-
-        setTimeout(() => {
-          Telegram.WebApp.ready();
-          document.getElementById('loader').style.display = 'none';
-          document.getElementById('app').style.display = 'block';
-        }, remaining);
-      } else {
-        setTimeout(checkReady, 100);
-      }
-    };
-
-    checkReady();
-  });
-
-  // --- Инициализация ---
-  updateProfile();
-  changeTab(1);
-
-  // ------------------ ВКЛАДКА 2: логика кубиков, оплата, удержание, частицы, модалки ------------------
-
-  // Массивы для lottie и инвойсов — подставь свои ссылки сюда
-  // Пример: "https://assets9.lottiefiles.com/packages/lf20_XXXXX.json"
-  const lottieLinks = [
-    "https://assets9.lottiefiles.com/packages/lf20_1.json", // замените
-    "https://assets9.lottiefiles.com/packages/lf20_2.json",
-    "https://assets9.lottiefiles.com/packages/lf20_3.json",
-    "https://assets9.lottiefiles.com/packages/lf20_4.json",
-    "https://assets9.lottiefiles.com/packages/lf20_5.json"
-  ];
-
-  // Платежные ссылки для каждого лотти (тебе нужно подставить свои openInvoice ссылки)
-  const invoiceLinks = [
-    "https://t.me/$invoice_link_1", // замените
-    "https://t.me/$invoice_link_2",
-    "https://t.me/$invoice_link_3",
-    "https://t.me/$invoice_link_4",
-    "https://t.me/$invoice_link_5"
-  ];
-
-  // Настройки удержания
-  const HOLD_REQUIRED_MS = 2500; // 2.5 секунды
-  const WIN_CHANCE = 0.30; // 30% шанс при каждом открытии
-
-  // Состояния
-  let tab2Initialized = false;
-  let lastPaymentIndex = null; // индекс кубика для которого была успешная оплата и ожидается удержание
-  let paymentPendingFor = null; // индекс для которого открыт инвойс (чтобы сверять при invoiceClosed)
-
-  // DOM
-  const lottoGrid = document.getElementById("lottoGrid");
-  const particlesCanvas = document.getElementById("particlesCanvas");
-  const resultModal = document.getElementById("resultModal");
-  const resultImage = document.getElementById("resultImage");
-  const resultTitle = document.getElementById("resultTitle");
-  const resultSubtitle = document.getElementById("resultSubtitle");
-  const winCodeContainer = document.getElementById("winCodeContainer");
-  const winCodeEl = document.getElementById("winCode");
-  const closeResult = document.getElementById("closeResult");
-  const openRulesBtn = document.getElementById("openRules");
-  const rulesModal = document.getElementById("rulesModal");
-  const closeRulesBtn = document.getElementById("closeRulesBtn");
-
-  // particles canvas context
-  let pcCtx, pcW, pcH;
-  function resizeCanvas() {
-    particlesCanvas.width = innerWidth * devicePixelRatio;
-    particlesCanvas.height = innerHeight * devicePixelRatio;
-    particlesCanvas.style.width = innerWidth + "px";
-    particlesCanvas.style.height = innerHeight + "px";
-    pcCtx = particlesCanvas.getContext('2d');
-    pcCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-    pcW = innerWidth; pcH = innerHeight;
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  // Простая система частиц
-  class Particle {
-    constructor(x,y){
-      this.x = x; this.y = y;
-      const ang = Math.random()*Math.PI*2;
-      const speed = 30 + Math.random()*180;
-      this.vx = Math.cos(ang)*speed;
-      this.vy = Math.sin(ang)*speed;
-      this.life = 800 + Math.random()*600;
-      this.size = 4 + Math.random()*6;
-      this.ttl = this.life;
-      this.color = `rgba(255,255,255,${0.9 + Math.random()*0.1})`;
-    }
-    update(dt){
-      const s = dt/16;
-      this.x += this.vx * (dt/1000);
-      this.y += this.vy * (dt/1000) + 60*(dt/1000); // gravity-like
-      this.ttl -= dt;
-    }
-    draw(ctx){
-      const t = Math.max(0, this.ttl / this.life);
-      ctx.globalAlpha = t;
-      ctx.fillStyle = this.color;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size * (0.6 + (1-t)*0.8), 0, Math.PI*2);
-      ctx.fill();
-    }
-    alive(){ return this.ttl > 0; }
-  }
-  let particles = [];
-  let lastFrame = performance.now();
-  let particlesActive = false;
-  function particleLoop(now){
-    const dt = now - lastFrame;
-    lastFrame = now;
-    if(particlesActive){
-      // update
-      particles.forEach(p => p.update(dt));
-      particles = particles.filter(p => p.alive());
-      // clear
-      pcCtx.clearRect(0,0,pcW,pcH);
-      // draw
-      particles.forEach(p => p.draw(pcCtx));
-      if(particles.length===0){
-        particlesActive=false;
-        pcCtx.clearRect(0,0,pcW,pcH);
-      }
-    }
-    requestAnimationFrame(particleLoop);
-  }
-  particleLoop(lastFrame);
-
-  // Вспомог: спавн частиц в точке x,y
-  function spawnParticles(x,y,amount=60){
-    particlesActive = true;
-    for(let i=0;i<amount;i++){
-      particles.push(new Particle(x, y));
+  } else {
+    walletMenu.classList.add('open');
+    walletMenu.setAttribute('aria-hidden','false');
+    walletCaret.classList.add('rot');
+    if(typeof gsap!=='undefined'){
+      gsap.fromTo(walletMenu,{opacity:0,scale:.98,y:-6},{opacity:1,scale:1,y:0,duration:.22,ease:'power2.out'});
     }
   }
-
-  // Функция генерирует 5 кубиков в случайном порядке
-  function initTab2(){
-    if(tab2Initialized) return;
-    tab2Initialized = true;
-
-    // перемешиваем индексы
-    const indices = [0,1,2,3,4].sort(()=>Math.random()-0.5);
-
-    indices.forEach((srcIdx, displayIdx) => {
-      const cube = document.createElement('div');
-      cube.className = 'cube';
-      cube.dataset.index = srcIdx; // индекс в исходных массивах
-      cube.innerHTML = `
-        <div class="lottie-holder" id="lottie-${srcIdx}"></div>
-        <div class="hold-overlay"></div>
-        <div class="hold-progress"><div class="bar"></div></div>
-        <div class="hold-hint">Нажми и держи</div>
-      `;
-      lottoGrid.appendChild(cube);
-
-      // Инициализируем lottie через lottie-web в контейнере
-      try {
-        lottie.loadAnimation({
-          container: document.getElementById(`lottie-${srcIdx}`),
-          renderer: 'svg',
-          loop: true,
-          autoplay: true,
-          path: lottieLinks[srcIdx] || lottieLinks[0]
-        });
-      } catch(e){
-        // если lottie не загрузится — можно оставить пусто
-        console.warn("lottie load error", e);
-      }
-
-      setupCubeEvents(cube, srcIdx);
+});
+document.addEventListener('click',(e)=>{
+  if(walletMenu.classList.contains('open') && !walletMenu.contains(e.target) && e.target!==walletCaret){
+    walletCaret.classList.remove('rot');
+    animateClose(walletMenu, ()=>{
+      walletMenu.classList.remove('open');
+      walletMenu.setAttribute('aria-hidden','true');
+      walletMenu.style.opacity = '';
+      walletMenu.style.transform = '';
     });
   }
+});
+disconnectBtn.addEventListener('click', async ()=>{
+  try{ await tonUI.disconnect(); }catch{}; 
+  walletCaret.classList.remove('rot');
+  walletMenu.classList.remove('open'); walletMenu.setAttribute('aria-hidden','true');
+  renderBalancePill();
+});
 
-  // События для одного кубика: оплата -> ожидание удержания -> удержание 2.5с -> результат
-  function setupCubeEvents(cubeEl, srcIdx){
-    // pointer events (поддержка мыши + touch)
-    let holdTimer = null;
-    let holdStart = null;
-    let holding = false;
-    let holdProgressBar = cubeEl.querySelector('.hold-progress > .bar');
-    const overlay = cubeEl.querySelector('.hold-overlay');
+/* ========= WALLET SHEET (Deposit + History) ========= */
+const walletOverlay = $('#walletOverlay');
+const walletClose = $('#walletClose');
+const tabDeposit  = $('#tabDeposit');
+const tabHistory  = $('#tabHistory');
+const panelDeposit= $('#panelDeposit');
+const panelHistory= $('#panelHistory');
+const connectedShort = $('#connectedShort');
+const amountInput = $('#amountInput');
+const depositBtn  = $('#depositBtn');
 
-    // событие нажатия: открываем инвойс сразу
-    cubeEl.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      // откроем инвойс для этого srcIdx
-      paymentPendingFor = srcIdx;
-      // открываем инвойс - замените на вашу ссылку
-      const invoiceLink = invoiceLinks[srcIdx] || invoiceLinks[0];
-      try {
-        Telegram.WebApp.openInvoice(invoiceLink);
-      } catch(err){
-        // Если Telegram API недоступен в обычном браузере, можно симулировать оплату (для теста)
-        console.warn("openInvoice failed (maybe running in non-Telegram environment):", err);
-        // В тестовом режиме симулируем успешную оплату через 1s:
-        setTimeout(() => {
-          // вызвать поведение как будто оплата прошла
-          handleInvoiceClosed({ status: "paid", forIndex: srcIdx });
-        }, 700);
-      }
-    });
-
-    // Pointer up/cancel: отменяем удержание если не завершено
-    const cancelHold = () => {
-      if(holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-      holding = false;
-      holdStart = null;
-      holdProgressBar.style.width = '0%';
-      overlay.style.boxShadow = 'inset 0 0 0 2px transparent';
-    };
-
-    // Запуск удержания: только если lastPaymentIndex === srcIdx (оплата прошла)
-    function tryStartHold(e){
-      if(lastPaymentIndex !== srcIdx) return;
-      if(holding) return;
-      holding = true;
-      holdStart = performance.now();
-      overlay.style.boxShadow = 'inset 0 0 0 2px rgba(0,200,255,0.18)';
-      // animate progress
-      const start = performance.now();
-      holdTimer = setInterval(() => {
-        const elapsed = performance.now() - start;
-        const pct = Math.min(100, (elapsed / HOLD_REQUIRED_MS) * 100);
-        holdProgressBar.style.width = pct + '%';
-        if(elapsed >= HOLD_REQUIRED_MS){
-          clearInterval(holdTimer);
-          holdTimer = null;
-          // spawn particles from center of cube
-          const rect = cubeEl.getBoundingClientRect();
-          const cx = rect.left + rect.width/2;
-          const cy = rect.top + rect.height/2;
-          spawnParticles(cx, cy, 120);
-          // завершение удержания — показать результат
-          finalizeOpen(srcIdx);
-          holding = false;
-          holdProgressBar.style.width = '100%';
-          overlay.style.boxShadow = 'inset 0 0 0 2px transparent';
-        }
-      }, 20);
-    }
-
-    // Слушатели pointerup/leave/cancel
-    cubeEl.addEventListener('pointerup', (e) => {
-      // если удержание идет — отменяем (если ещё не завершился)
-      cancelHold();
-    });
-    cubeEl.addEventListener('pointercancel', cancelHold);
-    cubeEl.addEventListener('pointerleave', cancelHold);
-
-    // Когда пользователь касается/нажимает и оплата подтверждена, стартуем удержание
-    // для мобильных может понадобиться начать при pointerdown, но чтобы не конфликтовать с открытием инвойса,
-    // мы начинаем удержание только после того, как пришёл статус "paid" и lastPaymentIndex установлен.
-    // Поэтому обработчик pointerdown выше просто открывает инвойс, а здесь добавим pointerdown listener для начала hold,
-    cubeEl.addEventListener('pointerdown', (e) => {
-      // если оплата уже прошла для этого кубика, начнем удержание после короткого таймаута,
-      // иначе — ничего (пользователь сначала должен оплатить).
-      setTimeout(() => {
-        tryStartHold(e);
-      }, 220); // небольшой буфер для стабильности на мобильных
-    });
-
-    // если пользователь явно нажал на кубик и оплатил раньше (т.е. lastPaymentIndex уже установлен),
-    // можно подсказать визуально:
-    // (добавлять визуал при условии lastPaymentIndex === srcIdx)
+function setWalletTab(which){
+  [tabDeposit,tabHistory].forEach(t=>t.classList.remove('active'));
+  [panelDeposit,panelHistory].forEach(p=>p.classList.remove('active'));
+  if(which==='deposit'){
+    tabDeposit.classList.add('active'); panelDeposit.classList.add('active');
+  } else {
+    tabHistory.classList.add('active'); panelHistory.classList.add('active'); renderHistory();
   }
+  animateOpen(which==='deposit' ? panelDeposit : panelHistory);
+}
+function openWallet(which='deposit'){
+  if(tonUI.connected) connectedShort.textContent = truncate(tonUI.account.address);
+  walletOverlay.classList.add('open'); walletOverlay.setAttribute('aria-hidden','false');
+  animateOpen($('.wallet-modal'));
+  setWalletTab(which);
+}
+function closeWallet(){ animateClose($('.wallet-modal'), ()=>{ walletOverlay.classList.remove('open'); walletOverlay.setAttribute('aria-hidden','true'); }); }
+plusBtn.addEventListener('click', ()=>{ if(!tonUI.connected){ tonUI.openModal(); return; } openWallet('deposit'); });
+walletClose.addEventListener('click', closeWallet);
+walletOverlay.addEventListener('click',(e)=>{ if(e.target===walletOverlay) closeWallet(); });
+tabDeposit.addEventListener('click', ()=> setWalletTab('deposit'));
+tabHistory.addEventListener('click', ()=> setWalletTab('history'));
 
-  // Обработчик завершения инвойса (слушаем global)
-  function handleInvoiceClosed(event){
-    // event может быть объектом Telegram.WebApp event, либо наш искусственный (forIndex)
-    // в Telegram WebApp API, на некоторых платформах можно слушать invoiceClosed
-    // Мы будем устанавливать lastPaymentIndex если статус == paid и paymentPendingFor совпадает.
-    const status = event.status;
-    const forIndex = (typeof event.forIndex !== 'undefined') ? event.forIndex : paymentPendingFor;
-    if(status === "paid"){
-      lastPaymentIndex = forIndex;
-      // уведомить пользователя визуально: включаем небольшой подсвет кубика
-      const cube = document.querySelector(`.cube[data-index='${forIndex}']`);
-      if(cube){
-        const overlay = cube.querySelector('.hold-overlay');
-        overlay.style.boxShadow = 'inset 0 0 0 3px rgba(0,200,255,0.2)';
-        // подсказка: можно удерживать
-        const hint = cube.querySelector('.hold-hint');
-        if(hint) hint.textContent = 'Удерживай 2.5с';
+/* ========= TonCenter helpers ========= */
+async function tcGet(path, params={}){
+  const url = new URL(TONCENTER_API + path);
+  Object.entries(params).forEach(([k,v])=> url.searchParams.set(k,v));
+  const res = await fetch(url.toString(), { headers:{'X-API-Key':TONCENTER_KEY} });
+  const data = await res.json();
+  if(!data || data.ok===false) throw new Error('TonCenter: ' + (data?.error || res.status));
+  return data.result ?? data;
+}
+async function findOutgoingToMerchant(fromAddress, expectedNano, lookBackSec=300){
+  const txs = await tcGet('/getTransactions', { address: fromAddress, limit: 24 });
+  const since = Math.floor(Date.now()/1000) - lookBackSec;
+  for(const tx of txs){
+    const ut = Number(tx.utime || 0);
+    if(ut < since) continue;
+    for(const m of (tx.out_msgs || [])){
+      if(m.destination === MERCHANT_ADDRESS && (m.value === expectedNano || Math.abs(Number(m.value)-Number(expectedNano)) < 10000)){
+        return { found:true, utime:ut, tx };
       }
-      // Сбрасываем paymentPendingFor
-      paymentPendingFor = null;
-    } else {
-      // оплата отменена/неуспешна — ничего не делаем
-      paymentPendingFor = null;
     }
   }
+  return { found:false };
+}
 
-  // Подключаем к глобальному слушателю Telegram, если есть
+/* ========= Deposit ========= */
+depositBtn.addEventListener('click', async () => {
+  if (!tonUI.connected) {
+    await tonUI.openModal();
+    return;
+  }
+
+  const amount = Number(amountInput.value);
+  if (!amount || amount <= 0) {
+    alert('Введите сумму TON');
+    return;
+  }
+
+  const nanoAmount = (amount * 1e9).toFixed(0);
+
   try {
-    Telegram.WebApp.onEvent("invoiceClosed", function(event) {
-      // event.status === "paid" | "cancelled" | "failed"
-      handleInvoiceClosed(event);
+    closeWallet();
+
+    await tonUI.sendTransaction({
+      validUntil: Math.floor(Date.now() / 1000) + 300,
+      messages: [ { address: MERCHANT_ADDRESS, amount: nanoAmount } ]
     });
-  } catch(e){
-    // если Telegram недоступен, ничего страшного — для теста можно вызывать handleInvoiceClosed вручную
-    console.warn("Telegram.WebApp.onEvent not available in this environment");
+
+    writeBalance(readBalance() + amount);
+
+    addHistory({ type:'deposit', amount, date: Date.now(), from: tonUI.account.address });
+
+    showToast(`+${amount} TON зачислено ✅`);
+
+  } catch (err) {
+    console.error('Deposit error:', err);
+    alert('Транзакция отменена ❌');
+  }
+});
+
+/* ========= History render ========= */
+function renderHistory() {
+  const list = readHistory();
+  const historyList = document.getElementById('historyList');
+  historyList.innerHTML = '';
+
+  if (!list.length) {
+    historyList.innerHTML = `<div style="color:#8b93a7;text-align:center;padding:10px;">No transactions yet</div>`;
+    return;
   }
 
-  // Финал открытия кубика (после удержания завершилось)
-  function finalizeOpen(srcIdx){
-    // Определяем победа/проигрыш случайно с шансом WIN_CHANCE
-    const win = Math.random() < WIN_CHANCE;
-    if(win){
-      // выигрываем: другое фото + текст + код
-      resultImage.src = "https://via.placeholder.com/400x250.png?text=Desk+Calendar"; // замени на своё изображение при желании
-      resultTitle.textContent = "Вы выиграли Desk Calendar!";
-      resultSubtitle.textContent = "Скопируйте код и отправьте его @vovnx";
-      const code = String(Math.floor(10000 + Math.random()*90000)); // 5 цифр
-      winCodeEl.textContent = code;
-      winCodeContainer.style.display = 'block';
-      // Показываем мини-модалку
-      showResultModal();
-
-      // клик по коду — копирование в буфер обмена
-      winCodeEl.onclick = () => {
-        navigator.clipboard.writeText(code).then(() => {
-          // небольшая подсказка
-          winCodeEl.textContent = "Скопировано!";
-          setTimeout(()=> winCodeEl.textContent = code, 1200);
-        }).catch(()=>{/* ignore */});
-      };
-    } else {
-      // проигрыш
-      resultImage.src = "https://via.placeholder.com/400x250.png?text=Не+в+этот+раз"; // замени если нужно
-      resultTitle.textContent = "Не в этот раз...";
-      resultSubtitle.textContent = "Попробуй снова";
-      winCodeContainer.style.display = 'none';
-      showResultModal();
-    }
-
-    // Сбрасываем lastPaymentIndex, чтобы надо было оплатить заново
-    lastPaymentIndex = null;
-  }
-
-  function showResultModal(){
-    resultModal.style.display = 'block';
-  }
-  function hideResultModal(){
-    resultModal.style.display = 'none';
-  }
-  closeResult.addEventListener('click', hideResultModal);
-
-  // Правила
-  openRulesBtn.addEventListener('click', () => { rulesModal.style.display = 'block'; });
-  closeRulesBtn.addEventListener('click', () => { rulesModal.style.display = 'none'; });
-
-  // копирование кода подсказка обработано в finalizeOpen
-
-  // Тестовый хак: если Telegram.WebApp не вызывает invoiceClosed автоматически (бросает в консоль), 
-  // можно симулировать оплату, например для тестирования в обычном браузере:
-  // window.simulatePay = (idx) => handleInvoiceClosed({status:"paid", forIndex: idx});
-
-  // ----------------- прочее: если пользователь кликает вне модалки — закрыть -----------------
-  window.addEventListener('click', function(e){
-    if(e.target === resultModal) hideResultModal();
-    if(e.target === rulesModal) rulesModal.style.display = 'none';
+  const groups = {};
+  list.forEach(tx => {
+    const date = new Date(tx.date).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    }).toUpperCase();
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(tx);
   });
 
-  // Небольшая проверка: если пользователь запускает changeTab(2) несколько раз — initTab2 только один раз
-  // (реализация выше).
+  Object.keys(groups).forEach(date => {
+    const dateEl = document.createElement('div');
+    dateEl.className = 'history-date';
+    dateEl.textContent = date;
+    historyList.appendChild(dateEl);
 
-  // ----------------- Дополнительно: если Telegram не доступен, предоставим простой способ теста -----------------
-  // (Можно вызвать window.simulatePay(индекс) в консоли для теста.)
-  window.simulatePay = (idx) => {
-    handleInvoiceClosed({status:"paid", forIndex: idx});
-  };
+    groups[date].forEach(tx => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
 
-  // (Доп) при загрузке: если вкладка 2 была активирована (например при прямой ссылке), инициализируем
-  if(document.getElementById('tab2').classList.contains('active')){
-    initTab2();
+      const left = document.createElement('div');
+      left.className = 'history-left';
+
+      const title = document.createElement('div');
+      title.className = 'history-title';
+      if (tx.type === 'deposit') title.textContent = 'Deposit';
+      else if (tx.type === 'purchase') title.textContent = `Purchase — ${tx.item}`;
+      else title.textContent = 'Operation';
+
+      const time = document.createElement('div');
+      time.className = 'history-time';
+      time.textContent = new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      left.appendChild(title);
+      left.appendChild(time);
+
+      const amount = document.createElement('div');
+      amount.className = 'history-amount';
+      if (tx.type === 'deposit') {
+        amount.classList.add('plus');
+        amount.textContent = `+${tx.amount} TON`;
+      } else {
+        amount.classList.add('minus');
+        if (tx.payWith === 'ton') amount.textContent = `-${tx.amount} TON`;
+        else amount.textContent = `-${tx.amount} ⭐`;
+      }
+
+      item.appendChild(left);
+      item.appendChild(amount);
+      historyList.appendChild(item);
+    });
+  });
+}
+
+/* ========= Inventory storage ========= */
+const PURCHASE_KEY = 'turbo_gifts_purchased_v1';
+function readPurchased(){ try{ return JSON.parse(localStorage.getItem(PURCHASE_KEY) || '[]'); }catch(e){ return []; } }
+function savePurchased(list){ try{ localStorage.setItem(PURCHASE_KEY, JSON.stringify(list)); }catch(e){} }
+function addPurchased(item) {
+  const list = readPurchased();
+  list.unshift({ ...item, uid: Date.now() + Math.random() });
+  savePurchased(list);
+  renderPurchasedGrid();
+}
+
+/* ========= Inventory cards ========= */
+function createPurchasedCardNode(item) {
+  const a = document.createElement('article');
+  a.className = 'purchased-card';
+
+  // Лента OWNED
+  const ribbon = document.createElement('div');
+  ribbon.className = 'ribbon';
+  ribbon.textContent = item.ribbon || 'OWNED';
+  a.appendChild(ribbon);
+
+  // Media
+  const media = document.createElement('div');
+  media.className = 'media';
+  const inner = document.createElement('div');
+  inner.setAttribute('data-lottie-url', item.lottie);
+  inner.style.width = '100%';
+  inner.style.height = '100%';
+  media.appendChild(inner);
+  a.appendChild(media);
+  loadLottieFor(inner);
+
+  // Клик — открыть модалку
+  a.addEventListener('click', () => openItemModalFromPurchased(item));
+
+  return a;
+}
+function renderPurchasedGrid(){
+  const grid = $('#purchasedGrid');
+  grid.innerHTML = '';
+  const list = readPurchased();
+  if(!list.length){
+    grid.innerHTML = '<div style="color:var(--muted); padding:12px; grid-column:1/-1; text-align:center">Пока нет купленных подарков</div>';
+    return;
   }
-</script>
+  list.forEach(item=> grid.appendChild(createPurchasedCardNode(item)));
+}
 
+/* ========= Cards / Lottie ========= */
+function loadLottieFor(el){
+  const url = el.getAttribute('data-lottie-url'); el.innerHTML='';
+  if(!url){ el.innerHTML='<div class="lottie-placeholder">Укажи ссылку Lottie</div>'; return; }
+  if(/\.json(\?|$)/i.test(url) && window.lottie){ try{ lottie.loadAnimation({container:el, renderer:'svg', loop:true, autoplay:true, path:url}); return; }catch(e){} }
+  if(/\.tgs(\?|$)/i.test(url) && window.rlottie){ try{ new rlottie.Player({name:'anim-'+Math.random().toString(36).slice(2), src:url, loop:true, autoplay:true, container:el}); el.style.display='grid'; el.style.placeItems='center'; return; }catch(e){} }
+  if(/\.(svg|png|jpg|jpeg|gif)(\?|$)/i.test(url)){ const img=document.createElement('img'); img.src=url; img.alt='media'; img.style.maxWidth='100%'; img.style.maxHeight='100%'; el.appendChild(img); return; }
+  el.innerHTML='<div class="lottie-placeholder">Неподдерживаемый формат</div>';
+}
+document.querySelectorAll('.media.lottie').forEach(loadLottieFor);
+
+/* ========= Hide sold animation ========= */
+const hideSoldCheckbox = $('#hideSold');
+function soldCards(){ return Array.from(document.querySelectorAll('[data-sold="true"]')); }
+function hideSoldAnimated(){ soldCards().forEach(c=>{ if(c.dataset._hidden==='1')return; if(typeof gsap!=='undefined'){ gsap.to(c,{duration:.28,opacity:0,scale:.98,y:-6,onComplete:()=>{c.style.display='none'; c.dataset._hidden='1';}});} else { c.style.display='none'; c.dataset._hidden='1'; } }); }
+function showSoldAnimated(){ soldCards().forEach(c=>{ if(c.dataset._hidden!=='1')return; c.style.display=''; if(typeof gsap!=='undefined'){ gsap.set(c,{opacity:0,scale:.98,y:-6}); gsap.to(c,{duration:.3,opacity:1,scale:1,y:0,onComplete:()=>{c.dataset._hidden='0';}});} else { c.dataset._hidden='0'; } }); }
+hideSoldCheckbox.addEventListener('change', ()=> hideSoldCheckbox.checked ? hideSoldAnimated() : showSoldAnimated());
+window.addEventListener('load', ()=>{ if(hideSoldCheckbox.checked) setTimeout(hideSoldAnimated,120); renderPurchasedGrid(); });
+
+/* ========= Item modal ========= */
+const itemOverlay = $('#itemOverlay');
+const modalCloseBtn = $('#modalCloseBtn');
+const modalTitle = $('#modalTitle');
+const modalLottie = $('#modalLottie');
+const modalPriceValue = $('#modalPriceValue');
+const modalBuyStars = $('#modalBuyStars');
+const modalBuyGift = $('#modalBuyGift');
+const modalBuyPrice = $('#modalBuyPrice');
+const modalShort = $('#modalShort');
+const payTonSwitch = $('#payTonSwitch');
+const payRow = $('#payRow');
+const mintBtn = $('#mintBtn');
+
+let activeItemMeta = null, lastLottieUrl=null;
+
+/* Обновление надписи на кнопке "Buy gift" в зависимости от режима оплаты */
+function updateBuyButtonLabel(){
+  if(!activeItemMeta) return;
+  const stars = Number(activeItemMeta.priceStars) || 0;
+  const payTon = payTonSwitch.classList.contains('on');
+
+  if(payTon){
+    const tonAmount = (stars * STAR_TO_TON);
+    const tonStr = (tonAmount < 1 ? tonAmount.toFixed(4) : tonAmount.toFixed(3));
+    modalBuyGift.textContent = `Buy gift — TON ${tonStr}`;
+  }else{
+    modalBuyGift.innerHTML = `Buy gift — ★ <span id="modalBuyPrice">${stars}</span>`;
+  }
+}
+
+function openItemModal(cardEl){
+  activeItemMeta = {
+    id: cardEl.id || ('gift_' + Date.now()),
+    title: cardEl.getAttribute('aria-label') || 'Подарок',
+    priceStars: Number(cardEl.querySelector('.price .price-value')?.textContent?.trim() || '0'),
+    lottie: cardEl.querySelector('.media.lottie')?.getAttribute('data-lottie-url') || '',
+    invoice: cardEl.getAttribute('data-invoice-url') || '#',
+    purchased: false
+  };
+  showItemModal(activeItemMeta);
+}
+function openItemModalFromPurchased(item){
+  activeItemMeta = { id:item.id, title:item.title, priceStars:Number(item.price), lottie:item.lottie, invoice:item.invoice||'#', purchased:true };
+  showItemModal(activeItemMeta);
+}
+function showItemModal(meta){
+  modalTitle.textContent = meta.title;
+  modalPriceValue.textContent = meta.priceStars;
+  modalShort.textContent = '';
+  modalBuyStars.href = $('#bannerBtn').href || '#';
+  modalBuyGift.href = meta.invoice || '#';
+
+  modalLottie.innerHTML='';
+  if(meta.lottie){
+    lastLottieUrl = meta.lottie;
+    const c=document.createElement('div');
+    c.style.width='100%'; c.style.height='100%';
+    c.setAttribute('data-lottie-url', meta.lottie);
+    modalLottie.appendChild(c); loadLottieFor(c);
+  } else {
+    modalLottie.innerHTML='<div class="lottie-placeholder">Нет анимации</div>';
+  }
+
+  if(meta.purchased){
+    modalBuyStars.classList.add('hidden');
+    payRow.classList.add('hidden');
+    modalBuyGift.classList.add('hidden');
+    mintBtn.classList.remove('hidden');
+  } else {
+    modalBuyStars.classList.remove('hidden');
+    payRow.classList.remove('hidden');
+    modalBuyGift.classList.remove('hidden');
+    mintBtn.classList.add('hidden');
+  }
+
+  // сброс и первичное обновление текста кнопки
+  payTonSwitch.classList.remove('on');
+  payTonSwitch.setAttribute('aria-checked','false');
+  updateBuyButtonLabel();
+
+  itemOverlay.classList.add('open'); itemOverlay.setAttribute('aria-hidden','false');
+  animateOpen($('.modal-card'));
+}
+function closeItem(){ animateClose($('.modal-card'), ()=>{ itemOverlay.classList.remove('open'); itemOverlay.setAttribute('aria-hidden','true'); }); }
+modalCloseBtn.addEventListener('click', closeItem);
+itemOverlay.addEventListener('click',(e)=>{ if(e.target===itemOverlay) closeItem(); });
+document.querySelectorAll('.card').forEach(card=> card.addEventListener('click', ()=> openItemModal(card)));
+
+payTonSwitch.addEventListener('click', ()=>{
+  payTonSwitch.classList.toggle('on');
+  const on = payTonSwitch.classList.contains('on');
+  payTonSwitch.setAttribute('aria-checked', on?'true':'false');
+  updateBuyButtonLabel();
+});
+
+modalBuyGift.addEventListener('click', async (e)=>{
+  const payInTon = payTonSwitch.classList.contains('on');
+  if(payInTon){
+    e.preventDefault();
+    const starsPrice = Number(activeItemMeta.priceStars);
+    const tonPrice = starsPrice * STAR_TO_TON;         // списываем внутр. TON-баланс
+    const bal = readBalance();
+    if(bal + 1e-9 < tonPrice){ alert('Недостаточно средств на внутреннем TON-балансе'); return; }
+    writeBalance(bal - tonPrice);
+    addHistory({ type:'purchase', amount: tonPrice, date: Date.now(), item: activeItemMeta.title, payWith:'ton' });
+    addPurchased({ id:activeItemMeta.id, title:activeItemMeta.title, price:activeItemMeta.priceStars, lottie:activeItemMeta.lottie, invoice:activeItemMeta.invoice, ribbon:'OWNED' });
+    closeItem();
+    showToast(`Куплено за TON ${tonPrice < 1 ? tonPrice.toFixed(4) : tonPrice.toFixed(3)}`);
+  }
+  // Если переключатель OFF — остаётся оплата Stars по ссылке (как было)
+});
+
+/* ========= Tabs switching ========= */
+const tab1 = $('#tab1'), tab2 = $('#tab2'), tab3 = $('#tab3');
+const mainApp = $('#mainApp'); const tab3Content = $('#tab3Content');
+function openTab(id){
+  [tab1,tab2,tab3].forEach(t=>{ t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  if(id==='tab3'){
+    tab3.classList.add('active'); tab3.setAttribute('aria-selected','true');
+    mainApp.style.display='none'; tab3Content.classList.add('open'); tab3Content.setAttribute('aria-hidden','false'); animateOpen(tab3Content);
+  }else{
+    tab1.classList.add('active'); tab1.setAttribute('aria-selected','true');
+    tab3Content.classList.remove('open'); tab3Content.setAttribute('aria-hidden','true'); mainApp.style.display=''; animateOpen(mainApp);
+  }
+}
+tab1.addEventListener('click', ()=> openTab('tab1'));
+tab3.addEventListener('click', ()=> openTab('tab3'));
+
+/* ========= Telegram user (avatar/name) ========= */
+(function initTelegramUser(){
+  try{
+    if(window.Telegram && Telegram.WebApp){
+      Telegram.WebApp.ready();
+      const u = Telegram.WebApp.initDataUnsafe?.user || null;
+      if(u){
+        const parts=[]; if(u.first_name)parts.push(u.first_name); if(u.last_name)parts.push(u.last_name);
+        if(!parts.length && u.username) parts.push(u.username);
+        const display = parts.join(' ') || 'User';
+        $('#userName').textContent = display; $('#bigName').textContent = display;
+        if(u.photo_url){ $('#avatar').style.backgroundImage = `url("${u.photo_url}")`; $('#bigAvatar').style.backgroundImage = `url("${u.photo_url}")`; }
+      }
+    }
+  }catch(e){}
+})();
+
+/* ========= init purchased grid ========= */
+document.addEventListener('DOMContentLoaded', ()=>{ renderPurchasedGrid(); renderBalancePill(); });
+</script>
 </body>
 </html>
